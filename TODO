@@ -9,18 +9,16 @@ simply because I can easily download and install them on my computer.  Other
 databases will get supported when I can get access to them, or someone else does
 it for me.
 
-* A bit more cleanup, then announce Rosetta/SQL::Routine Developer Release #2.
-
 * Do some serious refactoring / design changing of Generic.pm and Rosetta.pm.
 
 * Add the necessary functionality to support the creation of tables and
-performance of inserts and trivial selects against tables on a SQLite 3.1.6+
+performance of inserts and trivial selects against tables on a SQLite 3.2.1+
 database.  At the same time, a trivial genealogy application demo will be
 released with 'Rosetta' that makes use of this and shows it to be working. 
-Once that's done, announce Rosetta/SQL::Routine Developer Release #3.
+Once that's done, announce SQL::Routine/Rosetta Developer Release #3.
 
 * Add support for the same activities, plus all pre-existing abilities,
-against SQLite 2.8.16+ and multiple MySQL versions (5.0.2, 4.1.10a, 4.0.24,
+against SQLite 2.8.16+ and multiple MySQL versions (5.0.3, 4.1.10a, 4.0.24,
 3.23.58).  Also add support for talking to multiple versions of the same
 database at once, and for properly auto-detecting SQLite databases.  Also set
 things up so that CATALOG_OPEN will *not* create a new SQLite database if it
@@ -29,40 +27,35 @@ doesn't exist (behave like other dbs).
 * Start off the SQL::Routine::SQLParser module.  Add support to the
 module set for reverse-engineering tables from all database types.  For this
 release, do reverse-engineering manually, since its simple.  Once that's done,
-announce Rosetta/SQL::Routine Developer Release #4.
+announce SQL::Routine/Rosetta Developer Release #4.
 
 * Make the previous stuff work with PostgreSQL 8.0, and possibly 7.4 also.  
 
 * Add support for updates and deletes against tables.  Once that's done,
-announce Rosetta/SQL::Routine Developer Release #5.
+announce SQL::Routine/Rosetta Developer Release #5.
 
 * Make non-trivial selects work with all database types.  For some
 engines such as MySQL 3.23 and 4.0, this will require some emulation.  Once
-that's done, announce Rosetta/SQL::Routine Developer Release #6.
+that's done, announce SQL::Routine/Rosetta Developer Release #6.
 
 * Start testing generation and reverse-engineering of more complicated
 database schema objects like views and routines.  From now on, SQL tokenizing
 will probably be handled by a new dependency, such as Parse::RecDescent, as it
-is a lot more complicated.  Once that's done, announce Rosetta/SQL::Routine
+is a lot more complicated.  Once that's done, announce SQL::Routine/Rosetta
 Developer Release #7.
 
 * Start working on the schema-to-schema or db-to-db cloning features, and
 the insert-cursor features.
 
-* Create a branch of this distribution that is written in Perl 6 but matches
-this mainline distribution feature-wise.  This fork will initially have a
-dependency in Autrijus Tang's "Pugs" distribution, which will be the runtime
-engine that it runs under; later it will run under the "Parrot" engine.
-
 * Start the Rosetta::Emulator::DBI module and try to get it working on
 something simple, like connecting to a database and selecting records.  Maybe
 table creation and IUD also.
 
-* Some time around now, any or all of the core Rosetta/SRT modules may be
-updated to 'alpha' development status, up from 'pre-alpha'.  I may want to
+* Some time around now, any or all of the primary Rosetta framework modules may
+be updated to 'alpha' development status, up from 'pre-alpha'.  I may want to
 change the License around then too.
 
-* Announce the Rosetta/SQL::Routine Generally Available Release #1.
+* Announce the SQL::Routine/Rosetta Generally Available Release #1.
 
 * Get it to work with Oracle, OpenBase, other commonly used database products.
 

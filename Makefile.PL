@@ -1,5 +1,4 @@
 #!perl
-
 use 5.008001; use utf8; use strict; use warnings;
 
 use ExtUtils::MakeMaker;
@@ -20,11 +19,12 @@ tests will only be as thorough as the SQLite v3 feature set supports.
 __endquote
 
 WriteMakefile(
-	NAME	=> 'Rosetta::Engine::Generic',
-	VERSION_FROM => 'lib/Rosetta/Engine/Generic.pm', # finds $VERSION
-	PREREQ_PM => {
-		'Rosetta' => '0.41',
-		'SQL::Routine::SQLBuilder' => '0.16',
+	'NAME' => 'Rosetta::Engine::Generic',
+	'VERSION_FROM' => 'lib/Rosetta/Engine/Generic.pm', # finds $VERSION
+	'PREREQ_PM' => {
+		'Test::More' => '0.47', # but only for the test suite
+		'Rosetta' => '0.43',
+		'SQL::Routine::SQLBuilder' => '0.17',
 		'DBI' => '1.48',
 		'DBD::SQLite' => '1.08', # default database engine used by the test suite
 	},

@@ -1,13 +1,12 @@
 #!perl
-
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
-use Rosetta '0.41';
-use SQL::Routine::SQLBuilder '0.16';
-use DBI '1.48';
+use Rosetta 0.43;
+use SQL::Routine::SQLBuilder 0.17;
+use DBI 1.48;
 
 use base qw( Rosetta::Engine );
 
@@ -27,8 +26,8 @@ Core Modules: I<none>
 
 Non-Core Modules: 
 
-	Rosetta 0.41
-	SQL::Routine::SQLBuilder 0.16
+	Rosetta 0.43
+	SQL::Routine::SQLBuilder 0.17
 	DBI 1.48 (highest version recommended)
 
 =head1 COPYRIGHT AND LICENSE
@@ -1039,7 +1038,7 @@ such as one built on Win32::ODBC, or Engines that talk to non-SQL databases
 like dBase (?), FoxPro (?) or FileMaker.
 
 Rosetta::Engine::Generic has an external dependency in several
-Rosetta::Utility::* modules, which do most of the actual work in SQL generating
+SQL::Routine::* modules, which do most of the actual work in SQL generating
 (usual task) or parsing; the latter is for some types of schema reverse
 engineering.  However, reverse engineering from "information schemas" will
 likely be done in Generic itself or a third module, as those are not SQL based.

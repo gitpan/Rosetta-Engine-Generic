@@ -1,40 +1,45 @@
 #!perl
-
 use 5.008001; use utf8; use strict; use warnings;
 
-BEGIN { $| = 1; }
-use Rosetta::Validator '0.41';
-BEGIN {
-	my $total_possible = Rosetta::Validator->total_possible_tests();
-	$total_possible += 1; # extra nums for our own non-Validator tests
-	print "1..$total_possible\n";
-}
+use Test::More 0.47;
+use Rosetta::Validator 0.43;
+
+my $_total_possible = Rosetta::Validator->total_possible_tests();
+$_total_possible += 1; # test 1 is that SQL::Validator->main() doesn't die
+plan( 'tests' => $_total_possible );
 
 ######################################################################
 # First ensure the modules to test will compile, are correct versions:
 
-use Rosetta::Engine::Generic '0.16';
-use Rosetta::Engine::Generic::L::en '0.09';
+use Rosetta::Engine::Generic 0.17;
+use Rosetta::Engine::Generic::L::en 0.10;
 
 ######################################################################
 # Here are some utility methods:
 
-my $test_num = 0;
-$test_num ++; # test 1 is that SQL::Validator->main() doesn't die
-
 sub print_result {
 	my ($result) = @_;
-	$test_num ++;
 	my ($feature_key, $feature_status, $feature_desc_msg, $val_error_msg, $eng_error_msg) = 
 		@{$result}{'FEATURE_KEY', 'FEATURE_STATUS', 'FEATURE_DESC_MSG', 'VAL_ERROR_MSG', 'ENG_ERROR_MSG'};
 	my $result_str = 
-		($feature_status eq 'PASS' ? "ok $test_num (PASS)" : 
-			$feature_status eq 'FAIL' ? "not ok $test_num (FAIL)" : 
-			"ok $test_num (SKIP)").
-		" - $feature_key - ".object_to_string( $feature_desc_msg ).
+		$feature_key.' - '.object_to_string( $feature_desc_msg ).
 		($val_error_msg ? ' - '.object_to_string( $val_error_msg ) : '').
 		($eng_error_msg ? ' - '.object_to_string( $eng_error_msg ) : '');
-	print "$result_str\n";
+	if( $feature_status eq 'PASS' ) {
+		pass( $result_str ); # prints "ok N - $result_str\n"
+	} elsif( $feature_status eq 'FAIL' ) {
+		fail( $result_str ); # prints "not ok N - $result_str\n"
+	} else { # $feature_status eq 'SKIP'
+		SKIP: {
+			skip( $result_str, 1 ); # prints "ok N # skip $result_str\n"
+			fail( '' ); # this text will NOT be output; call required by skip()
+		}
+	}
+}
+
+sub print_message {
+	my ($detail) = @_;
+	print "-- $detail\n";
 }
 
 sub object_to_string {
@@ -47,8 +52,8 @@ sub object_to_string {
 			'Rosetta::Validator::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
 		my $user_text = $translator->translate_message( $message );
 		unless( $user_text ) {
-			return "internal error: can't find user text for a message: ".
-				$message->as_string()." ".$translator->as_string();
+			return 'internal error: can\'t find user text for a message: '.
+				$message->as_string().' '.$translator->as_string();
 		}
 		return $user_text;
 	}
@@ -90,7 +95,7 @@ sub import_setup_options {
 ######################################################################
 # Now perform the actual tests:
 
-print "-- START TESTING Rosetta::Engine::Generic\n";
+print_message( 'START TESTING Rosetta::Engine::Generic' );
 
 my $setup_filepath = shift( @ARGV ) || 't_setup.pl'; # set from first command line arg; '0' means use default name
 my $trace_to_stdout = shift( @ARGV ) ? 1 : 0; # set from second command line arg
@@ -113,7 +118,7 @@ if( my $exception = $@ ) {
 			'file_path' => 'test',
 		},
 	};
-	unlink( "test" ); # remove any existing file from previous run of this test
+	-e 'test' and unlink( 'test' ); # remove any existing file from previous run of this test
 }
 
 my $trace_fh = $trace_to_stdout ? \*STDOUT : undef;
@@ -123,16 +128,16 @@ my $test_results = eval {
 };
 if( my $exception = $@ ) {
 	# errors in test suite itself, or core modules, it seems
-	print "not ok 1 (FAIL) - Rosetta::Validator->main() execution - ".
-		object_to_string( $exception )."\n";
+	fail( 'Rosetta::Validator->main() execution - '.object_to_string( $exception ) );
 } else {
-	print "ok 1 (PASS) - Rosetta::Validator->main() execution\n";
+	# test suite itself seems to be fine
+	pass( 'Rosetta::Validator->main() execution' );
 	foreach my $result (@{$test_results}) {
 		print_result( $result );
 	}
 }
 
-print "-- DONE TESTING Rosetta::Engine::Generic\n";
+print_message( 'DONE TESTING Rosetta::Engine::Generic' );
 
 ######################################################################
 

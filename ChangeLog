@@ -1,3 +1,41 @@
+2005-04-03   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Rosetta-Engine-Generic Release 0.17.
+
+	* New code file versions are: Generic.pm v0.17 and en.pm v0.10.
+
+	* Updated external dependencies on Rosetta to v0.43 and on
+	SQL::Routine::SQLBuilder to v0.17.
+
+	* Added new external dependency on Test::More v0.47 (bundled with Perl
+	5.8.x); this distribution's test suite has been re-factored to use it rather
+	than rolling its own equivalent functionality, which is more in line with
+	CPAN best practices.  The new dependency does not extend to this
+	distribution's core modules (everything in /lib), which do not use it.
+
+	* Updated every 'use' statement in this distribution so that the module
+	version is formatted as a number rather than a string; this fixes a problem
+	where Perl was not asserting that the installed modules were new enough.
+
+	* In order to help ease the transition to Perl 6, updated every in-code
+	function and method which made direct references to @_ elements so that they
+	explicitly declare argument variables instead with "my (...) = @_;";
+	moreover, any functions that don't use their invocant use "undef" for it in
+	the above list.  This 1 en.pm routine was affected: get_text_by_key().
+
+	* In Rosetta_Engine_Generic.t, when the test suite is defaulting to use a
+	SQLite 'test' database, it now does the '-e' file test to check whether a
+	'test' file already exists prior to deleting it.  This should resolve the
+	CPAN automated test failure on one platform that was reported for v0.16.
+
+	* In Generic.pm, trivial DESCRIPTION update.
+
+	* Removed the section in the TODO file about a branch to Perl 6.
+
+	* NOTICE: This release v0.17 is the last one to contain detailed ChangeLog
+	entries for releases v0.01 thru v0.17; release v0.18 will truncate the
+	ChangeLog so it only shows details for v0.18 and later.
+
 2005-03-19   Darren Duncan <perl@DarrenDuncan.net>
 
 	* Rosetta-Engine-Generic Release 0.16.
