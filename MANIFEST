@@ -1,0 +1,12 @@
+ChangeLog
+INSTALL
+lib/Rosetta/Engine/Generic.pm
+lib/Rosetta/Engine/Generic/L/en.pm
+LICENSE
+Makefile.PL
+MANIFEST
+META.yml                                 Module meta-data (added by MakeMaker)
+ReadMe
+t_setup.pl
+t/Rosetta_Engine_Generic.t
+TODO
