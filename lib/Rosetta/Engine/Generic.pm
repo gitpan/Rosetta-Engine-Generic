@@ -2,10 +2,10 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic;
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
-use Rosetta 0.43;
-use SQL::Routine::SQLBuilder 0.17;
+use Rosetta 0.45;
+use SQL::Routine::SQLBuilder 0.18;
 use DBI 1.48;
 
 use base qw( Rosetta::Engine );
@@ -26,8 +26,8 @@ Core Modules: I<none>
 
 Non-Core Modules: 
 
-	Rosetta 0.43
-	SQL::Routine::SQLBuilder 0.17
+	Rosetta 0.45
+	SQL::Routine::SQLBuilder 0.18
 	DBI 1.48 (highest version recommended)
 
 =head1 COPYRIGHT AND LICENSE
@@ -35,17 +35,18 @@ Non-Core Modules:
 This file is part of the Rosetta::Engine::Generic feature reference
 implementation of the Rosetta database portability library.
 
-Rosetta::Engine::Generic is Copyright (c) 1999-2005, Darren R. Duncan.  All
+Rosetta::Engine::Generic is Copyright (c) 2002-2005, Darren R. Duncan.  All
 rights reserved.  Address comments, suggestions, and bug reports to
-B<perl@DarrenDuncan.net>, or visit "http://www.DarrenDuncan.net" for more
+perl@DarrenDuncan.net, or visit http://www.DarrenDuncan.net/ for more
 information.
 
 Rosetta::Engine::Generic is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License (GPL) version 2 as
-published by the Free Software Foundation (http://www.fsf.org/).  You should
-have received a copy of the GPL as part of the Rosetta::Engine::Generic
-distribution, in the file named "LICENSE"; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+it under the terms of the GNU General Public License (GPL) as published by the
+Free Software Foundation (http://www.fsf.org/); either version 2 of the License,
+or (at your option) any later version.  You should have received a copy of the
+GPL as part of the Rosetta::Engine::Generic distribution, in the file named
+"GPL"; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+Suite 330, Boston, MA 02111-1307 USA.
 
 Linking Rosetta::Engine::Generic statically or dynamically with other modules is
 making a combined work based on Rosetta::Engine::Generic.  Thus, the terms and
@@ -784,18 +785,14 @@ sub install_dbi_driver {
 
 sub make_srt_node {
 	my ($engine, $node_type, $container) = @_;
-	my $node = $container->new_node( $node_type );
-	$node->set_node_id( $container->get_next_free_node_id() );
-	$node->put_in_container( $container );
+	my $node = $container->new_node( $container, $node_type, $container->get_next_free_node_id() );
 	return $node;
 }
 
 sub make_child_srt_node {
 	my ($engine, $node_type, $pp_node, $pp_attr) = @_;
 	my $container = $pp_node->get_container();
-	my $node = $pp_node->new_node( $node_type );
-	$node->set_node_id( $container->get_next_free_node_id() );
-	$node->put_in_container( $container );
+	my $node = $pp_node->new_node( $container, $node_type, $container->get_next_free_node_id() );
 	$node->set_primary_parent_attribute( $pp_node );
 	return $node;
 }

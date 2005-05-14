@@ -2,17 +2,21 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 use Test::More 0.47;
-use Rosetta::Validator 0.43;
+use Rosetta::Validator 0.45;
 
 my $_total_possible = Rosetta::Validator->total_possible_tests();
-$_total_possible += 1; # test 1 is that SQL::Validator->main() doesn't die
+$_total_possible += 4; # tests 1-4 are that 2 core modules compile and are correct versions
+$_total_possible += 1; # test 5 is that SQL::Validator->main() doesn't die
 plan( 'tests' => $_total_possible );
 
 ######################################################################
 # First ensure the modules to test will compile, are correct versions:
 
-use Rosetta::Engine::Generic 0.17;
-use Rosetta::Engine::Generic::L::en 0.10;
+use_ok( 'Rosetta::Engine::Generic' );
+cmp_ok( $Rosetta::Engine::Generic::VERSION, '==', 0.18, "Rosetta::Engine::Generic is the correct version" );
+
+use_ok( 'Rosetta::Engine::Generic::L::en' );
+cmp_ok( $Rosetta::Engine::Generic::L::en::VERSION, '==', 0.11, "Rosetta::Engine::Generic::L::en is the correct version" );
 
 ######################################################################
 # Here are some utility methods:
@@ -35,11 +39,6 @@ sub print_result {
 			fail( '' ); # this text will NOT be output; call required by skip()
 		}
 	}
-}
-
-sub print_message {
-	my ($detail) = @_;
-	print "-- $detail\n";
 }
 
 sub object_to_string {
@@ -95,8 +94,6 @@ sub import_setup_options {
 ######################################################################
 # Now perform the actual tests:
 
-print_message( 'START TESTING Rosetta::Engine::Generic' );
-
 my $setup_filepath = shift( @ARGV ) || 't_setup.pl'; # set from first command line arg; '0' means use default name
 my $trace_to_stdout = shift( @ARGV ) ? 1 : 0; # set from second command line arg
 
@@ -104,8 +101,8 @@ my $setup_options = eval {
 	return import_setup_options( $setup_filepath );
 };
 if( my $exception = $@ ) {
-	warn "-- NOTICE: could not load any test setup options from file '$setup_filepath': $exception";
-	warn "-- NOTICE: defaulting to test with a file-based SQLite database named 'test'\n";
+	warn "# NOTICE: could not load any test setup options from file '$setup_filepath': $exception";
+	warn "# NOTICE: defaulting to test with a file-based SQLite database named 'test'\n";
 	$setup_options = {
 		'data_storage_product' => {
 			'product_code' => 'SQLite',
@@ -136,8 +133,6 @@ if( my $exception = $@ ) {
 		print_result( $result );
 	}
 }
-
-print_message( 'DONE TESTING Rosetta::Engine::Generic' );
 
 ######################################################################
 

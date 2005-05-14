@@ -1,14 +1,15 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Rosetta-Engine-Generic
-version:      0.17
+version:      0.18
 version_from: lib/Rosetta/Engine/Generic.pm
 installdirs:  site
 requires:
     DBD::SQLite:                   1.08
     DBI:                           1.48
-    Rosetta:                       0.43
-    SQL::Routine::SQLBuilder:      0.17
+    Rosetta:                       0.45
+    Rosetta::Validator:            0.45
+    SQL::Routine::SQLBuilder:      0.18
     Test::More:                    0.47
 
 distribution_type: module

@@ -23,8 +23,9 @@ WriteMakefile(
 	'VERSION_FROM' => 'lib/Rosetta/Engine/Generic.pm', # finds $VERSION
 	'PREREQ_PM' => {
 		'Test::More' => '0.47', # but only for the test suite
-		'Rosetta' => '0.43',
-		'SQL::Routine::SQLBuilder' => '0.17',
+		'Rosetta' => '0.45',
+		'Rosetta::Validator' => '0.45', # but only for the test suite
+		'SQL::Routine::SQLBuilder' => '0.18',
 		'DBI' => '1.48',
 		'DBD::SQLite' => '1.08', # default database engine used by the test suite
 	},

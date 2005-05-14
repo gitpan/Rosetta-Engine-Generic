@@ -56,8 +56,9 @@ Core Modules:
 
 Non-Core Modules: 
 
-	Rosetta 0.43
-	SQL::Routine::SQLBuilder 0.17
+	Rosetta 0.45
+	Rosetta::Validator 0.45 (but only for the test suite)
+	SQL::Routine::SQLBuilder 0.18
 	DBI 1.48
 	DBD::SQLite 1.08 (default database engine used by the test suite)
 	various DBI Driver (DBD) modules
@@ -78,17 +79,18 @@ COPYRIGHT AND LICENSE
 This file is part of the Rosetta::Engine::Generic feature reference
 implementation of the Rosetta database portability library.
 
-Rosetta::Engine::Generic is Copyright (c) 1999-2005, Darren R. Duncan.  All
+Rosetta::Engine::Generic is Copyright (c) 2002-2005, Darren R. Duncan.  All
 rights reserved.  Address comments, suggestions, and bug reports to
-B<perl@DarrenDuncan.net>, or visit "http://www.DarrenDuncan.net" for more
+perl@DarrenDuncan.net, or visit http://www.DarrenDuncan.net/ for more
 information.
 
 Rosetta::Engine::Generic is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License (GPL) version 2 as
-published by the Free Software Foundation (http://www.fsf.org/).  You should
-have received a copy of the GPL as part of the Rosetta::Engine::Generic
-distribution, in the file named "LICENSE"; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+it under the terms of the GNU General Public License (GPL) as published by the
+Free Software Foundation (http://www.fsf.org/); either version 2 of the License,
+or (at your option) any later version.  You should have received a copy of the
+GPL as part of the Rosetta::Engine::Generic distribution, in the file named
+"GPL"; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
+Suite 330, Boston, MA 02111-1307 USA.
 
 Linking Rosetta::Engine::Generic statically or dynamically with other modules is
 making a combined work based on Rosetta::Engine::Generic.  Thus, the terms and
