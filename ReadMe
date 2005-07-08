@@ -1,4 +1,4 @@
-                REFERENCE ROSETTA ENGINE IMPLEMENTATION
+                       Rosetta-Engine-Generic
 ----------------------------------------------------------------------
 
 by Darren Duncan <perl@DarrenDuncan.net>
@@ -56,11 +56,12 @@ Core Modules:
 
 Non-Core Modules: 
 
-	Rosetta 0.45
-	Rosetta::Validator 0.45 (but only for the test suite)
-	SQL::Routine::SQLBuilder 0.18
+	Rosetta 0.46
+	Rosetta::Validator 0.46 (but only for the test suite)
+	SQL::Routine::SQLBuilder 0.19
+	SQL::Routine::SQLParser 0.01
 	DBI 1.48
-	DBD::SQLite 1.08 (default database engine used by the test suite)
+	DBD::SQLite 1.09 (default database engine used by the test suite)
 	various DBI Driver (DBD) modules
 
 SUPPORT
@@ -89,8 +90,8 @@ it under the terms of the GNU General Public License (GPL) as published by the
 Free Software Foundation (http://www.fsf.org/); either version 2 of the License,
 or (at your option) any later version.  You should have received a copy of the
 GPL as part of the Rosetta::Engine::Generic distribution, in the file named
-"GPL"; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-Suite 330, Boston, MA 02111-1307 USA.
+"GPL"; if not, write to the Free Software Foundation, Inc., 51 Franklin St,
+Fifth Floor, Boston, MA  02110-1301, USA.
 
 Linking Rosetta::Engine::Generic statically or dynamically with other modules is
 making a combined work based on Rosetta::Engine::Generic.  Thus, the terms and

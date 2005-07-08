@@ -18,7 +18,7 @@ my $config_options = {
 #		'login_pass' => 'pwd',
 #	},
 #	'catalog_instance_opt' => {
-#		'delim_ident' => 1,
+#		'ident_style' => 'YD_CS',
 #	},
 #	'catalog_link_instance_opt' => {
 #		'dbi_driver' => 'YeOldeDBD',

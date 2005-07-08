@@ -2,11 +2,12 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
-use Rosetta 0.45;
-use SQL::Routine::SQLBuilder 0.18;
-use DBI 1.48;
+use Rosetta 0.46;
+use SQL::Routine::SQLBuilder 0.19; # TODO: require at runtime instead
+use SQL::Routine::SQLParser 0.01; # TODO: require at runtime instead
+use DBI 1.48; # TODO: require at runtime instead
 
 use base qw( Rosetta::Engine );
 
@@ -26,8 +27,9 @@ Core Modules: I<none>
 
 Non-Core Modules: 
 
-	Rosetta 0.45
-	SQL::Routine::SQLBuilder 0.18
+	Rosetta 0.46
+	SQL::Routine::SQLBuilder 0.19
+	SQL::Routine::SQLParser 0.01
 	DBI 1.48 (highest version recommended)
 
 =head1 COPYRIGHT AND LICENSE
@@ -45,8 +47,8 @@ it under the terms of the GNU General Public License (GPL) as published by the
 Free Software Foundation (http://www.fsf.org/); either version 2 of the License,
 or (at your option) any later version.  You should have received a copy of the
 GPL as part of the Rosetta::Engine::Generic distribution, in the file named
-"GPL"; if not, write to the Free Software Foundation, Inc., 59 Temple Place,
-Suite 330, Boston, MA 02111-1307 USA.
+"GPL"; if not, write to the Free Software Foundation, Inc., 51 Franklin St,
+Fifth Floor, Boston, MA  02110-1301, USA.
 
 Linking Rosetta::Engine::Generic statically or dynamically with other modules is
 making a combined work based on Rosetta::Engine::Generic.  Thus, the terms and
@@ -84,9 +86,12 @@ version.
 my $PROP_IN_PROGRESS_PREP_ENG = 'in_progress_prep_eng'; # Generic object - 
 	# This stores a brand new $prep_eng while it is being constructed (rather than 
 	# passing it internally as an argument).  Our internal routines can set properties 
-	# in it while the $routine is being constructed, so that the compiled $routine 
+	# in it while the $prep_routine is being constructed, so that the compiled $prep_routine 
 	# can later reference them.  This is set and cleared by prepare(); 
 	# it must always be undefined when prepare() of the current object isn't executing.
+my $PROP_PREP_RTN = 'prep_rtn'; # ref to a Perl anonymous subroutine
+	# This Perl closure is generated, by prepare(), from the SRT Node tree that 
+	# RTN_NODE refers to; the resulting Preparation's execute() will simply invoke the closure.
 my $PROP_ENV_PERL_RTNS = 'env_perl_rtns'; # hash (str,code) - For Environment Intfs - 
 	# This stores all of the SRT routines that were compiled into Perl code.
 	# Hash keys are unique generated ids that incorporate the name-space hierarchy of a routine.
@@ -137,7 +142,7 @@ my $ECO_LOGIN_NAME  = 'login_name';
 my $ECO_LOGIN_PASS  = 'login_pass';
 my $ECO_DBI_DRIVER  = 'dbi_driver';
 my $ECO_AUTO_COMMIT = 'auto_commit';
-my $ECO_DELIM_IDENT = 'delim_ident';
+my $ECO_IDENT_STYLE = 'ident_style';
 
 # Declarations of feature support at Rosetta::Engine::Generic Environment level:
 my %FEATURES_SUPP_BY_ENV = (
@@ -198,12 +203,34 @@ my %FEATURES_SUPP_BY_ENV = (
 
 sub _throw_error_message {
 	# This overrides the same-named method of 'Rosetta'.
-	my ($engine, $error_code, $args) = @_;
-	ref($args) eq 'HASH' or $args = {};
-	if( my $routine_node = $args->{'RNAME'} ) {
-		$args->{'RNAME'} = $engine->build_perl_identifier_rtn( $routine_node, 1 );
+	my ($engine, $msg_key, $msg_vars) = @_;
+	ref($msg_vars) eq 'HASH' or $msg_vars = {};
+	if( my $routine_node = $msg_vars->{'RNAME'} ) {
+		$msg_vars->{'RNAME'} = $engine->build_perl_identifier_rtn( $routine_node, 1 );
 	}
-	$engine->SUPER::_throw_error_message( $error_code, $args );
+	$engine->SUPER::_throw_error_message( $msg_key, $msg_vars );
+}
+
+######################################################################
+
+sub new_environment_engine {
+	return Rosetta::Engine::Generic::Environment->new();
+}
+
+sub new_connection_engine {
+	return Rosetta::Engine::Generic::Connection->new();
+}
+
+sub new_cursor_engine {
+	return Rosetta::Engine::Generic::Cursor->new();
+}
+
+sub new_literal_engine {
+	return Rosetta::Engine::Generic::Literal->new();
+}
+
+sub new_preparation_engine {
+	return Rosetta::Engine::Generic::Preparation->new();
 }
 
 ######################################################################
@@ -212,6 +239,7 @@ sub new {
 	my ($class) = @_;
 	my $engine = bless( {}, ref($class) || $class );
 	$engine->{$PROP_IN_PROGRESS_PREP_ENG} = undef;
+	$engine->{$PROP_PREP_RTN} = undef;
 	$engine->{$PROP_ENV_PERL_RTNS} = undef;
 	$engine->{$PROP_ENV_PERL_RTN_STRS} = undef;
 	$engine->{$PROP_CONN_PREP_ECO} = undef;
@@ -227,16 +255,6 @@ sub new {
 
 ######################################################################
 
-sub destroy {
-	my ($engine, $interface) = @_;
-	if( $engine->{$PROP_CONN_IS_OPEN} ) {
-		$engine->close_dbi_connection( $engine->{$PROP_CONN_DBH_OBJ},
-			$engine->{$PROP_CONN_ECO}->{$ECO_AUTO_COMMIT} );
-	}
-	# Assume Interface won't let us be called if child Interfaces (and Engines) exist
-	%{$engine} = ();
-}
-
 sub DESTROY {
 	my ($engine) = @_;
 	if( $engine->{$PROP_CONN_IS_OPEN} ) {
@@ -251,7 +269,7 @@ sub DESTROY {
 sub features {
 	my ($engine, $interface, $feature_name) = @_;
 	my %feature_list = %FEATURES_SUPP_BY_ENV;
-	if( $interface->get_interface_type() eq $Rosetta::INTFTP_CONNECTION ) {
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Connection' ) ) {
 		if( $engine->{$PROP_CONN_ECO}->{$ECO_AUTO_COMMIT} ) {
 			$feature_list{'TRAN_BASIC'} = 0;
 		} # else TRAN_BASIC missing since don't know yet.
@@ -273,27 +291,30 @@ sub features {
 sub prepare {
 	# Assume we only get called off of Environment and Connection and Cursor interfaces.
 	my ($engine, $interface, $routine_node) = @_;
-	if( $interface->get_interface_type() eq $Rosetta::INTFTP_ENVIRONMENT ) {
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Environment' ) ) {
 		$engine->{$PROP_ENV_PERL_RTNS} ||= {}; # This couldn't have been done at Env Eng creation time.
 		$engine->{$PROP_ENV_PERL_RTN_STRS} ||= {}; # Ditto.
 	}
 
-	if( $routine_node->get_primary_parent_attribute()->get_node_type() eq 'routine' ) {
-		# Only externally visible routines can be externally invoked; nested routines are not.
+	unless( $routine_node->get_primary_parent_attribute()->get_node_type() eq 'application' ) {
+		# Only externally visible routines in 'application space' can be directly 
+		# invoked by a user application; to invoke anything in 'database space', 
+		# you must have a separate app-space proxy routine invoke it.
 		$engine->_throw_error_message( 'ROS_G_NEST_RTN_NO_INVOK', { 'RNAME' => $routine_node } );
 	}
 
-	my $prep_eng = $engine->new();
+	my $prep_intf = $interface->new_preparation_interface( $interface, $routine_node );
+	my $prep_eng = $prep_intf->get_engine();
 
 	$engine->{$PROP_IN_PROGRESS_PREP_ENG} = $prep_eng;
-	my $routine = eval {
+	my $prep_routine = eval {
 		return $engine->build_perl_routine( $interface, $routine_node );
 	};
 	$engine->{$PROP_IN_PROGRESS_PREP_ENG} = undef; # must be empty before we exit
 	$@ and die $@;
 
-	my $prep_intf = $interface->new( $Rosetta::INTFTP_PREPARATION, undef, 
-		$interface, $prep_eng, $routine_node, $routine );
+	$prep_eng->{$PROP_PREP_RTN} = $prep_routine;
+
 	return $prep_intf;
 }
 
@@ -306,10 +327,9 @@ sub payload {
 
 ######################################################################
 
-sub routine_source_code {
-	my ($env_eng, $env_intf, $routine_node) = @_;
-	my $routine_name = $env_eng->build_perl_identifier_rtn( $routine_node );
-	return $env_eng->{$PROP_ENV_PERL_RTN_STRS}->{$routine_name}; # undef if none
+sub execute {
+	my ($prep_eng, $prep_intf, $routine_args) = @_;
+	return $prep_eng->{$PROP_PREP_RTN}->( $prep_eng, $prep_intf, $routine_args );
 }
 
 ######################################################################
@@ -321,8 +341,8 @@ sub build_perl_routine {
 	my $routine_name = $engine->build_perl_identifier_rtn( $routine_node );
 	my $routine_name_debug = $engine->build_perl_identifier_rtn( $routine_node, 1 );
 
-	if( my $routine = $env_eng->{$PROP_ENV_PERL_RTNS}->{$routine_name} ) {
-		return $routine; # This routine was compiled previously; use that one.
+	if( my $prep_routine = $env_eng->{$PROP_ENV_PERL_RTNS}->{$routine_name} ) {
+		return $prep_routine; # This routine was compiled previously; use that one.
 	}
 
 	my $routine_type = $routine_node->get_enumerated_attribute( 'routine_type' );
@@ -365,18 +385,12 @@ __EOL
 __EOL
 	}
 
-	if( $routine_node->get_primary_parent_attribute()->get_node_type() eq 'schema' ) {
-		# This new Perl routine is to CALL a database stored procedure/function.
-#		$routine_str .= $engine->build_perl_call_to_db_rtn( $interface, $routine_node );
-	} else {
-		# This new Perl routine is an application-side routine, either externally visible or nested.
-		$routine_str .= $engine->build_perl_routine_body( $interface, $routine_node );
-	}
+	$routine_str .= $engine->build_perl_routine_body( $interface, $routine_node );
 
 	if( $routine_type eq 'PROCEDURE' ) {
 		# All procedures conceptually return nothing, actually return SUCCESS when ok.
 		$routine_str .= <<__EOL;
-	return \$rtv_prep_intf->new( \$Rosetta::INTFTP_SUCCESS );
+	return \$rtv_prep_intf->new_success_interface( \$rtv_prep_intf );
 __EOL
 	}
 
@@ -389,15 +403,15 @@ __EOL
 		print $trace_fh "$class built a new routine whose code is:\n----------\n$routine_str\n----------\n";
 	}
 
-	my $routine = eval $routine_str;
+	my $prep_routine = eval $routine_str;
 	if( $@ ) {
 		$engine->_throw_error_message( 'ROS_G_PERL_COMPILE_FAIL', 
 			{ 'RNAME' => $routine_node, 'PERL_ERROR' => $@, 'PERL_CODE' => $routine_str } );
 	}
 
-	$env_eng->{$PROP_ENV_PERL_RTNS}->{$routine_name} = $routine;
+	$env_eng->{$PROP_ENV_PERL_RTNS}->{$routine_name} = $prep_routine;
 	$env_eng->{$PROP_ENV_PERL_RTN_STRS}->{$routine_name} = $routine_str;
-	return $routine; # This routine is now compiled for the first time.
+	return $prep_routine; # This routine is now compiled for the first time.
 }
 
 ######################################################################
@@ -560,23 +574,22 @@ sub build_perl_expr_urtn {
 
 sub get_env_cx_e_and_i {
 	my ($engine, $interface) = @_;
-	my $intf_type = $interface->get_interface_type();
-	if( $intf_type eq $Rosetta::INTFTP_PREPARATION ) {
-		my $p_intf = $interface->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Preparation' ) ) {
+		my $p_intf = $interface->get_parent_by_creation_interface();
 		my $p_eng = $p_intf->get_engine();
 		return $p_eng->get_env_cx_e_and_i( $p_intf );
 	}
-	if( $intf_type eq $Rosetta::INTFTP_ENVIRONMENT ) {
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Environment' ) ) {
 		return $engine, $interface;
 	}
-	if( $intf_type eq $Rosetta::INTFTP_CONNECTION ) {
-		my $env_intf = $interface->get_parent_interface()->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Connection' ) ) {
+		my $env_intf = $interface->get_parent_by_context_interface();
 		my $env_eng = $env_intf->get_engine();
 		return $env_eng, $env_intf;
 	}
-	if( $intf_type eq $Rosetta::INTFTP_CURSOR ) {
-		my $conn_intf = $interface->get_parent_interface()->get_parent_interface();
-		my $env_intf = $conn_intf->get_parent_interface()->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Cursor' ) ) {
+		my $conn_intf = $interface->get_parent_by_context_interface();
+		my $env_intf = $conn_intf->get_parent_by_context_interface();
 		my $env_eng = $env_intf->get_engine();
 		return $env_eng, $env_intf;
 	}
@@ -585,35 +598,33 @@ sub get_env_cx_e_and_i {
 
 sub get_conn_cx_e_and_i {
 	my ($engine, $interface) = @_;
-	my $intf_type = $interface->get_interface_type();
-	if( $intf_type eq $Rosetta::INTFTP_PREPARATION ) {
-		my $p_intf = $interface->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Preparation' ) ) {
+		my $p_intf = $interface->get_parent_by_creation_interface();
 		my $p_eng = $p_intf->get_engine();
 		return $p_eng->get_conn_cx_e_and_i( $p_intf );
 	}
-	if( $intf_type eq $Rosetta::INTFTP_CONNECTION ) {
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Connection' ) ) {
 		return $engine, $interface;
 	}
-	if( $intf_type eq $Rosetta::INTFTP_CURSOR ) {
-		my $conn_intf = $interface->get_parent_interface()->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Cursor' ) ) {
+		my $conn_intf = $interface->get_parent_by_context_interface();
 		my $conn_eng = $conn_intf->get_engine();
 		return $conn_eng, $conn_intf;
 	}
-	return; # $intf_type eq $INTFTP_ENVIRONMENT
+	return; # $interface isa Environment
 }
 
 sub get_curs_cx_e_and_i {
 	my ($engine, $interface) = @_;
-	my $intf_type = $interface->get_interface_type();
-	if( $intf_type eq $Rosetta::INTFTP_PREPARATION ) {
-		my $p_intf = $interface->get_parent_interface();
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Preparation' ) ) {
+		my $p_intf = $interface->get_parent_by_creation_interface();
 		my $p_eng = $p_intf->get_engine();
 		return $p_eng->get_curs_cx_e_and_i( $p_intf );
 	}
-	if( $intf_type eq $Rosetta::INTFTP_CURSOR ) {
+	if( UNIVERSAL::isa( $interface, 'Rosetta::Interface::Cursor' ) ) {
 		return $engine, $interface;
 	}
-	return; # $intf_type eq $INTFTP_ENVIRONMENT or $intf_type eq $INTFTP_CONNECTION
+	return; # $interface isa Environment or $interface isa Connection
 }
 
 ######################################################################
@@ -807,7 +818,7 @@ sub build_perl_declare_cx_conn {
 	my $cat_link_bp_node = $routine_var_node->get_node_ref_attribute( 'conn_link' );
 
 	# Now figure out link target by cross-referencing app inst with cat link bp.
-	my $app_inst_node = $app_intf->get_srt_node();
+	my $app_inst_node = $app_intf->get_app_inst_node();
 	my $cat_link_inst_node = undef;
 	foreach my $link (@{$app_inst_node->get_child_nodes( 'catalog_link_instance' )}) {
 		if( $link->get_node_ref_attribute( 'blueprint' ) eq $cat_link_bp_node ) {
@@ -846,14 +857,16 @@ sub build_perl_declare_cx_conn {
 		$conn_prep_eco{'local_dsn'}; # used for non-file-based
 
 	my $rtn_var_nm = $engine->build_perl_identifier_rtn_var( $routine_var_node );
-	my $rtn_var_nm_eng = $rtn_var_nm.'_eng';
+	my $rtn_var_nm_p_intf = $rtn_var_nm.'_p_intf';
+	my $rtn_var_nm_p_eng = $rtn_var_nm.'_p_eng';
 
 	$prep_eng->{$PROP_CONN_PREP_ECO} = \%conn_prep_eco;
 
+	my $cat_link_bp_node_id = $cat_link_bp_node->get_node_id();
 	return <<__EOL;
-	my $rtn_var_nm_eng = \$rtv_prep_eng->new();
-	$rtn_var_nm = \$rtv_prep_intf->new( \$Rosetta::INTFTP_CONNECTION, undef, 
-		\$rtv_prep_intf, $rtn_var_nm_eng );
+	my ($rtn_var_nm_p_eng, $rtn_var_nm_p_intf) = \$rtv_prep_eng->get_env_cx_e_and_i( \$rtv_prep_intf );
+	$rtn_var_nm = \$rtv_prep_intf->new_connection_interface( \$rtv_prep_intf, $rtn_var_nm_p_intf, 
+		\$rtv_prep_intf->get_srt_container()->find_node_by_id( $cat_link_bp_node_id ) );
 __EOL
 }
 
@@ -871,13 +884,13 @@ sub srtn_catalog_list {
 	# For client-server based dbs with one specific spot for data, all they manage is 1 catalog.
 	# Note: the treatment for MySQL is confirmed as the official conception by their developers.
 
-	my $app_inst_node = $prep_intf->get_root_interface()->get_srt_node();
+	my $app_inst_node = $prep_intf->get_root_interface()->get_app_inst_node();
 	my $app_bp_node = $app_inst_node->get_node_ref_attribute( 'blueprint' );
 	my $container = $app_inst_node->get_container();
 
 	my @cat_link_bp_nodes = ();
 
-	my $dlp_node = $env_intf->get_srt_node(); # A 'data_link_product' Node (repr ourself).
+	my $dlp_node = $env_intf->get_link_prod_node(); # A 'data_link_product' Node (repr ourself).
 	foreach my $dbi_driver (DBI->available_drivers()) {
 		# Tested $dbi_driver values on my system are (space-delimited):
 		# [DBM ExampleP File Proxy SQLite Sponge mysql]; they are ready to use as is.
@@ -937,11 +950,11 @@ sub srtn_catalog_list {
 		}
 	}
 
-	my $lit_eng = $prep_eng->new();
+	my $lit_intf = $prep_intf->new_literal_interface( $prep_intf );
+	my $lit_eng = $lit_intf->get_engine();
+
 	$lit_eng->{$PROP_LIT_PAYLOAD} = \@cat_link_bp_nodes;
 
-	my $lit_intf = $prep_intf->new( $Rosetta::INTFTP_LITERAL, undef, 
-		$prep_intf, $lit_eng );
 	return $lit_intf;
 }
 
@@ -951,11 +964,11 @@ sub srtn_catalog_open {
 	my ($prep_eng, $prep_intf, $args) = @_;
 	my $conn_intf = $args->{'CONN_CX'};
 	my $conn_eng = $conn_intf->get_engine();
-	my $conn_prep_intf = $conn_intf->get_parent_interface();
+	my $conn_prep_intf = $conn_intf->get_parent_by_creation_interface();
 	my $conn_prep_eng = $conn_prep_intf->get_engine();
 
 	if( $conn_eng->{$PROP_CONN_IS_OPEN} ) {
-		my $routine_node = $prep_intf->get_srt_node();
+		my $routine_node = $prep_intf->get_routine_node();
 		$prep_eng->_throw_error_message( 'ROS_G_CATALOG_OPEN_CONN_STATE_OPEN', 
 			{ 'RNAME' => $routine_node } );
 	}
@@ -974,8 +987,8 @@ sub srtn_catalog_open {
 		$dbi_driver, $local_dsn, $login_name, $login_pass, $auto_commit );
 
 	my $builder = SQL::Routine::SQLBuilder->new();
-	defined( $conn_eco{'delim_ident'} ) and 
-		$builder->delimited_identifiers( $conn_eco{'delim_ident'} );
+	defined( $conn_eco{'ident_style'} ) and 
+		$builder->delimited_identifiers( $conn_eco{'ident_style'} );
 
 	$conn_eng->{$PROP_CONN_IS_OPEN} = 1;
 	$conn_eng->{$PROP_CONN_ECO} = \%conn_eco;
@@ -991,7 +1004,7 @@ sub srtn_catalog_close {
 	my $conn_eng = $conn_intf->get_engine();
 
 	unless( $conn_eng->{$PROP_CONN_IS_OPEN} ) {
-		my $routine_node = $prep_intf->get_srt_node();
+		my $routine_node = $prep_intf->get_routine_node();
 		$prep_eng->_throw_error_message( 'ROS_G_CATALOG_CLOSE_CONN_STATE_CLOSED', 
 			{ 'RNAME' => $routine_node } );
 	}
@@ -1004,6 +1017,32 @@ sub srtn_catalog_close {
 	$conn_eng->{$PROP_CONN_DBH_OBJ} = undef;
 	$conn_eng->{$PROP_CONN_SQL_BUILDER} = undef;
 }
+
+######################################################################
+######################################################################
+
+package Rosetta::Engine::Generic::Environment;
+use base qw( Rosetta::Engine::Generic );
+
+######################################################################
+
+package Rosetta::Engine::Generic::Connection;
+use base qw( Rosetta::Engine::Generic );
+
+######################################################################
+
+package Rosetta::Engine::Generic::Cursor;
+use base qw( Rosetta::Engine::Generic );
+
+######################################################################
+
+package Rosetta::Engine::Generic::Literal;
+use base qw( Rosetta::Engine::Generic );
+
+######################################################################
+
+package Rosetta::Engine::Generic::Preparation;
+use base qw( Rosetta::Engine::Generic );
 
 ######################################################################
 ######################################################################
@@ -1282,27 +1321,27 @@ declare support for said activity.
 
 =item
 
-B<delim_ident> - bool - The SQL standard defines 2 main formats for naming
-identifiers (eg table, column names) which we will call "delimited identifiers"
-and "bareword identifiers".  Delimited identifiers are case-sensitive and can
-contain any character (probably) like a literal string; however, all references
-to them must be quoted/delimited, which looks unusual considering their
-conceptual equivalence to variable or function or class names in programming
-languages.  Bareword identifiers are case-insensitive (and practically fully
-uppercase) and can contain only letters, underscores, and partly numbers; SQL
-using this format tends to look much cleaner, and this format is also
-considered the "normal" way of doing things in SQL, with most databases
-supporting it only, if not both.  As delimited identifiers carry more
-information (a full superset), that is what Rosetta and SQL::Routine
-support internally.  Movement from a delimited format to a bareword one will
-render all alpha characters uppercase and strip the non-allowed characters, and
-both steps discard information; movement the other way will keep all
-information and match as uppercase.  Rosetta::Engine::Generic will generate SQL
-in either format, as determined either by a database product's abilities, or
-according to this Engine configuration option.  True (the default) says to use
-delimited identifiers, where false says to use bareword ones.  Identifiers are
-usually delimited by double-quotes ('"', as distinct from string delimiting
-single-quotes), or back-ticks ('`').  I<Feature details subject to change.>
+B<ident_style> - enum - If this "identifier style" option is 'YD_CS' (the
+default), then Rosetta::Engine::Generic will generate SQL identifiers (such as
+table or column or schema names) that are delimited, case-sensitive, and able to
+contain any characters (including whitespace).  If this option is 'ND_CI_UP',
+then generated SQL identifiers will be non-delimited, case-insensitive, with
+latin characters folded to uppercase, and contain only a limited range of
+characters such as: letters, underscore, numbers (non-leading); these are
+"bare-word" identifiers.  The 'ND_CI_DN' style is the same as 'ND_CI_UP' except
+that the identifier is folded to lowercase.  Note that all of these formats are
+supported by the SQL standard but that the standard specifies all non-delimited
+identifiers will match as uppercase when compared to delimited identifiers.  SQL
+using the bare-word format may look cleaner than the delimited format, and some
+databases support it only, if not both.  As delimited identifiers carry more
+information (a full superset), that is what Rosetta and SQL::Routine support
+internally.  Movement from a delimited format to a bare-word one will fold the
+case of all alpha characters and strip the non-allowed characters, and both
+steps discard information; movement the other way will keep all information. 
+Rosetta::Engine::Generic will generate SQL in either format, as determined
+either by a database product's abilities, or according to this Engine
+configuration option.  Identifiers are usually delimited by double-quotes ('"',
+as distinct from string delimiting single-quotes), or back-ticks ('`').
 
 =back
 

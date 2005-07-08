@@ -1,3 +1,92 @@
+2005-07-07   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Rosetta-Engine-Generic Release 0.19.
+
+	* New code file versions are: Generic.pm v0.19 and en.pm v0.12.
+
+	* Updated external dependencies on Rosetta to v0.46 and on
+	SQL::Routine::SQLBuilder to v0.19.
+
+	* This release is primarily to retain compatability with multiple other 
+	distributions' recent updates; very little was changed besides this.
+
+	* Added new external dependency on SQL::Routine::SQLParser v0.01; this
+	module will be used by Generic.pm's schema reverse-engineering facility in
+	the future, though at present it isn't actually used for anything, as is
+	also still the case with SQL::Routine::SQLBuilder.
+
+	* Updated all files in this distribution that display the physical address
+	of the Free Software Foundation, Inc. so it uses their current address of
+	"51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA" rather than their
+	previous address of "59 Temple Place, Suite 330, Boston, MA 02111-1307 USA";
+	this affects every COPYRIGHT AND LICENSE statement in the core files and the
+	'ReadMe' file, plus any 'GPL' or 'LGPL' license file.
+
+	* Updated the INSTALL file so that it is more generic, and all of my
+	distributions now use an identical copy of it.
+
+	* Updated the main heading in the ReadMe file to state the distribution's
+	name rather than a terse description of it.
+
+	* Corresponding to a recent SQL::Routine::SQLBuilder update, replaced the
+	Engine Configuration Option 'delim_ident' with a different 'ident_style'
+	option, which affected the srtn_catalog_open() method, and also rewrote half
+	of the related documentation.  Likewise updated t_setup.pl to invoke the new
+	option in place of the old one.
+
+	* Corresponding to a Rosetta change where execute() now invokes a same-named
+	Engine function, and the Interface no longer stores a Perl closure for the
+	Engine, added new Generic method execute() and new property 'prep routine';
+	also updated new() to declare the property and prepare() to set it.  Also 
+	renamed any $routine method variables to $prep_routine.
+
+	* Removed the destroy() method since Rosetta Interface objects can now
+	auto-destruct, and they will no longer invoke it.
+
+	* Replaced all tests on an Interface's "interface type" property with tests
+	on the Interface's class name, since the Rosetta Interface class was thus
+	split into multiple classes and the property is gone.
+
+	* Removed the routine_source_code() method, since no Interface method exists 
+	any more that will call it.
+
+	* Updated _throw_error_message() to use more descriptive argument names.
+
+	* Updated prepare() and build_perl_routine() so that now only routines that
+	are direct children of an 'application' Node can be externally invoked; if
+	one wants to invoke a 'schema' routine now, they must do so within an
+	'application' routine; previously, only inner routines of other routines 
+	could not be invoked.
+
+	* Following that Rosetta's new_*_interface() methods will now create their
+	own Engine object for the new Interfaces rather than taking them as
+	arguments, updated these Generic methods so they use that Engine object for
+	setting properties of rather than making their own: prepare(),
+	build_perl_routine(), build_perl_declare_cx_conn(), srtn_catalog_list().
+
+	* Following that Rosetta now has 2 alternate parent/child trees (by-creation
+	vs by-context), replaced any single or double-chained invocations of
+	get_parent_interface() with single
+	get_parent_by_[creation|context]_interface() invocations; these methods were
+	updated: get_[env|conn|curs]_cx_e_and_i(), srtn_catalog_open().
+
+	* Updated these methods to pass the alternate "parent interface" arguments
+	to new_*_interface(): build_perl_declare_cx_conn().
+
+	* Renamed any get_srt_node() Interface method calls with one of the
+	following: get_app_inst_node(), get_link_prod_node(), get_routine_node(); it
+	affected these methods: build_perl_declare_cx_conn(),
+	srtn_catalog_[list|open|close]().
+
+	* Updated Rosetta_Engine_Generic.t, and the en.pm SYNOPSIS, to add
+	'SQL::Routine::SQLBuilder::L::' to the Translator Sets list, following that
+	SQL::Routine::SQLBuilder v0.19+ can throw its own (localized) exceptions.
+	Likewise added 'SQL::Routine::SQLParser::L::' to both files.  Just Generic.t
+	also had 'Rosetta::Utility::EasyBake::L::' added, since that is now used by
+	Rosetta::Validator.
+
+	* This distribution also had a few other minor changes and fixes.
+
 2005-05-13   Darren Duncan <perl@DarrenDuncan.net>
 
 	* Rosetta-Engine-Generic Release 0.18.

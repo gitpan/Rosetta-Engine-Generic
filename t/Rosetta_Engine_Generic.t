@@ -2,7 +2,7 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 use Test::More 0.47;
-use Rosetta::Validator 0.45;
+use Rosetta::Validator 0.46;
 
 my $_total_possible = Rosetta::Validator->total_possible_tests();
 $_total_possible += 4; # tests 1-4 are that 2 core modules compile and are correct versions
@@ -13,10 +13,10 @@ plan( 'tests' => $_total_possible );
 # First ensure the modules to test will compile, are correct versions:
 
 use_ok( 'Rosetta::Engine::Generic' );
-cmp_ok( $Rosetta::Engine::Generic::VERSION, '==', 0.18, "Rosetta::Engine::Generic is the correct version" );
+cmp_ok( $Rosetta::Engine::Generic::VERSION, '==', 0.19, "Rosetta::Engine::Generic is the correct version" );
 
 use_ok( 'Rosetta::Engine::Generic::L::en' );
-cmp_ok( $Rosetta::Engine::Generic::L::en::VERSION, '==', 0.11, "Rosetta::Engine::Generic::L::en is the correct version" );
+cmp_ok( $Rosetta::Engine::Generic::L::en::VERSION, '==', 0.12, "Rosetta::Engine::Generic::L::en is the correct version" );
 
 ######################################################################
 # Here are some utility methods:
@@ -47,8 +47,10 @@ sub object_to_string {
 		$message = $message->get_error_message();
 	}
 	if( ref($message) and UNIVERSAL::isa( $message, 'Locale::KeyedText::Message' ) ) {
-		my $translator = Locale::KeyedText->new_translator( ['Rosetta::Engine::Generic::L::', 
-			'Rosetta::Validator::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
+		my $translator = Locale::KeyedText->new_translator( 
+			['Rosetta::Validator::L::', 'Rosetta::Utility::EasyBake::L::', 
+			'Rosetta::Engine::Generic::L::', 'SQL::Routine::SQLBuilder::L::', 
+			'SQL::Routine::SQLParser::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
 		my $user_text = $translator->translate_message( $message );
 		unless( $user_text ) {
 			return 'internal error: can\'t find user text for a message: '.
