@@ -9,16 +9,31 @@ simply because I can easily download and install them on my computer.  Other
 databases will get supported when I can get access to them, or someone else does
 it for me.
 
-* Do some serious refactoring / design changing of Generic.pm and Rosetta.pm.
+* Update all code files to have version numbers of format N.N.N rather than
+N.NN, and the new ones will be v-strings; at the same time, add dependency on
+something like only.pm, which knows how to enforce dependencies involving
+v-strings.
+
+* Update the white space of this distribution to follow some best practices. 
+This includes indenting with spaces instead of tabs, and having code lines not
+be longer than 80 or 78 characters.  Run through perltidy for the first time as
+well (though I was very consistent before), which may alter a few other things
+towards best practices.
+
+* Convert all class objects to be of the inside-out variety rather than
+hash-based, so to gain rigorous protection against external code directly
+accessing our object attributes, and to avoid related maintenance problems.
+
+* Do some serious refactoring / design changing of Generic.pm.
 
 * Add the necessary functionality to support the creation of tables and
-performance of inserts and trivial selects against tables on a SQLite 3.2.1+
-database.  At the same time, a trivial genealogy application demo will be
-released with 'Rosetta' that makes use of this and shows it to be working. 
-Once that's done, announce SQL::Routine/Rosetta Developer Release #3.
+performance of inserts and trivial selects against tables on a SQLite 3.2.x
+database.
+
+* Once the above are done, announce Rosetta/SQL::Routine Developer Release #3.
 
 * Add support for the same activities, plus all pre-existing abilities,
-against SQLite 2.8.16+ and multiple MySQL versions (5.0.3, 4.1.10a, 4.0.24,
+against SQLite 2.8.x and multiple MySQL versions (5.0.x, 4.1.x, 4.0.x,
 3.23.58).  Also add support for talking to multiple versions of the same
 database at once, and for properly auto-detecting SQLite databases.  Also set
 things up so that CATALOG_OPEN will *not* create a new SQLite database if it

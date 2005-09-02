@@ -1,3 +1,38 @@
+                       Rosetta-Engine-Generic
+----------------------------------------------------------------------
+
+2005-09-01   Darren Duncan <perl@DarrenDuncan.net>
+
+	* Rosetta-Engine-Generic Release 0.20.
+
+	* New code file versions are: Generic.pm v0.20.
+
+	* Updated external dependencies on Rosetta to v0.47 and on
+	SQL::Routine::SQLBuilder to v0.20.
+
+	* Added a new main title to this Changes file that matches the ReadMe file.
+
+	* Rewrote the documentation section KEEPING UP TO DATE in the ReadMe file.
+
+	* Corrected an oversight from release 0.19; added a 'Changes' file paragraph
+	concerning the added Generic.pm classes and constructor wrapper methods.
+
+	* Updated Generic.pm to retain compatability with changes made in
+	SQL::Routine v0.66; one can no longer straight compare two SRT Node or
+	Container objects to determine their equivalence, since they are now
+	interfaces over a shared storage object.  Updated the Generic.pm method
+	build_perl_declare_cx_conn() to use the new SQL::Routine method
+	get_self_id() instead of the straight comparisons.
+
+	* Updated Rosetta_Engine_Generic.t to retain compatibility with
+	Rosetta::Validator v0.47, which has the old Rosetta::Utility::EasyBake
+	merged into it.
+
+	* Updated Generic.pm to retain compatability with changes made in
+	SQL::Routine v0.69; replaced all invocations of the Node methods
+	[get|clear|set]_[literal|enumerated|node_ref]_attribute[|s]() with
+	invocations of [get|clear_set]_attribute[|s]().
+
 2005-07-07   Darren Duncan <perl@DarrenDuncan.net>
 
 	* Rosetta-Engine-Generic Release 0.19.
@@ -77,6 +112,14 @@
 	following: get_app_inst_node(), get_link_prod_node(), get_routine_node(); it
 	affected these methods: build_perl_declare_cx_conn(),
 	srtn_catalog_[list|open|close]().
+
+	* Added new constructor functions, a different one for each Interface type
+	that an Engine backs, following that the Rosetta core now expects to invoke
+	them rather than new(): new_*_engine where * is one of environment,
+	connection, cursor, literal, preparation.  Added 5 mew class declarations,
+	that currently subclass Rosetta::Engine::Generic but don't add any
+	properties or methods: Rosetta::Engine::Generic::* where * is one of
+	Environment, Connection, Cursor, Literal, Preparation.
 
 	* Updated Rosetta_Engine_Generic.t, and the en.pm SYNOPSIS, to add
 	'SQL::Routine::SQLBuilder::L::' to the Translator Sets list, following that

@@ -2,7 +2,7 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 use Test::More 0.47;
-use Rosetta::Validator 0.46;
+use Rosetta::Validator 0.47;
 
 my $_total_possible = Rosetta::Validator->total_possible_tests();
 $_total_possible += 4; # tests 1-4 are that 2 core modules compile and are correct versions
@@ -13,7 +13,7 @@ plan( 'tests' => $_total_possible );
 # First ensure the modules to test will compile, are correct versions:
 
 use_ok( 'Rosetta::Engine::Generic' );
-cmp_ok( $Rosetta::Engine::Generic::VERSION, '==', 0.19, "Rosetta::Engine::Generic is the correct version" );
+cmp_ok( $Rosetta::Engine::Generic::VERSION, '==', 0.20, "Rosetta::Engine::Generic is the correct version" );
 
 use_ok( 'Rosetta::Engine::Generic::L::en' );
 cmp_ok( $Rosetta::Engine::Generic::L::en::VERSION, '==', 0.12, "Rosetta::Engine::Generic::L::en is the correct version" );
@@ -47,8 +47,7 @@ sub object_to_string {
 		$message = $message->get_error_message();
 	}
 	if( ref($message) and UNIVERSAL::isa( $message, 'Locale::KeyedText::Message' ) ) {
-		my $translator = Locale::KeyedText->new_translator( 
-			['Rosetta::Validator::L::', 'Rosetta::Utility::EasyBake::L::', 
+		my $translator = Locale::KeyedText->new_translator( ['Rosetta::Validator::L::', 
 			'Rosetta::Engine::Generic::L::', 'SQL::Routine::SQLBuilder::L::', 
 			'SQL::Routine::SQLParser::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
 		my $user_text = $translator->translate_message( $message );
@@ -79,7 +78,7 @@ sub import_setup_options {
 		die $err_str."result is a hash ref that contains no elements\n";
 	}
 	eval {
-		Rosetta->validate_connection_setup_options( $setup_options ); # dies on problem
+		Rosetta::Validator->validate_connection_setup_options( $setup_options ); # dies on problem
 	};
 	if( my $exception = $@ ) {
 		unless( $exception->get_message_key() eq 'ROS_I_V_CONN_SETUP_OPTS_NO_ENG_NM' ) {

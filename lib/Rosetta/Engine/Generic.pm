@@ -2,10 +2,10 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic;
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
-use Rosetta 0.46;
-use SQL::Routine::SQLBuilder 0.19; # TODO: require at runtime instead
+use Rosetta 0.47;
+use SQL::Routine::SQLBuilder 0.20; # TODO: require at runtime instead
 use SQL::Routine::SQLParser 0.01; # TODO: require at runtime instead
 use DBI 1.48; # TODO: require at runtime instead
 
@@ -27,8 +27,8 @@ Core Modules: I<none>
 
 Non-Core Modules: 
 
-	Rosetta 0.46
-	SQL::Routine::SQLBuilder 0.19
+	Rosetta 0.47
+	SQL::Routine::SQLBuilder 0.20
 	SQL::Routine::SQLParser 0.01
 	DBI 1.48 (highest version recommended)
 
@@ -345,7 +345,7 @@ sub build_perl_routine {
 		return $prep_routine; # This routine was compiled previously; use that one.
 	}
 
-	my $routine_type = $routine_node->get_enumerated_attribute( 'routine_type' );
+	my $routine_type = $routine_node->get_attribute( 'routine_type' );
 	unless( $routine_type eq 'FUNCTION' or $routine_type eq 'PROCEDURE' ) {
 		# You can not directly invoke a trigger or other non-func/proc
 		$engine->_throw_error_message( 'ROS_G_RTN_TP_NO_INVOK', 
@@ -362,7 +362,7 @@ __EOL
 		my $routine_cxt_name = $engine->build_perl_identifier_rtn_var( $routine_cxt_node );
 		my $routine_cxt_name_eng = $routine_cxt_name.'_eng';
 		my $routine_cxt_name_debug = $engine->build_perl_identifier_rtn_var( $routine_cxt_node, 1 );
-		my $cont_type = $routine_cxt_node->get_enumerated_attribute( 'cont_type' );
+		my $cont_type = $routine_cxt_node->get_attribute( 'cont_type' );
 		if( $cont_type eq 'CONN' ) {
 			$routine_str .= <<__EOL;
 	my ($routine_cxt_name_eng, $routine_cxt_name) = # routine_cxt: $routine_cxt_name_debug
@@ -426,7 +426,7 @@ sub build_perl_routine_body {
 		$routine_str .= <<__EOL;
 	my $routine_var_name = undef; # routine_var: $routine_var_name_debug
 __EOL
-		my $cont_type = $routine_var_node->get_enumerated_attribute( 'cont_type' );
+		my $cont_type = $routine_var_node->get_attribute( 'cont_type' );
 		if( $cont_type eq 'ERROR' ) {
 		} elsif( $cont_type eq 'SCALAR' ) {
 			my $init_val = $engine->build_perl_literal_cstr_from_atvl( $routine_var_node, 'init_lit_val' );
@@ -457,19 +457,19 @@ __EOL
 
 sub build_perl_stmt {
 	my ($engine, $interface, $routine_node, $routine_stmt_node) = @_;
-	if( my $compound_stmt_routine = $routine_stmt_node->get_node_ref_attribute( 'block_routine' ) ) {
+	if( my $compound_stmt_routine = $routine_stmt_node->get_attribute( 'block_routine' ) ) {
 		# Not implemented yet.
-	} elsif( my $assign_dest_node = $routine_stmt_node->get_node_ref_attribute( 'assign_dest' ) || 
-			$routine_stmt_node->get_node_ref_attribute( 'assign_dest' ) ) {
+	} elsif( my $assign_dest_node = $routine_stmt_node->get_attribute( 'assign_dest' ) || 
+			$routine_stmt_node->get_attribute( 'assign_dest' ) ) {
 		my $assign_dest_name = $engine->build_perl_identifier_rtn_var( $assign_dest_node );
 		my $expr_str = $engine->build_perl_expr( $interface, $routine_node, 
 			$routine_stmt_node->get_child_nodes( 'routine_expr' )->[0] );
 		return <<__EOL;
 	$assign_dest_name = $expr_str;
 __EOL
-	} elsif( $routine_stmt_node->get_enumerated_attribute( 'call_sroutine' ) ) {
+	} elsif( $routine_stmt_node->get_attribute( 'call_sroutine' ) ) {
 		return $engine->build_perl_stmt_srtn( $interface, $routine_node, $routine_stmt_node );
-	} elsif( $routine_stmt_node->get_node_ref_attribute( 'call_uroutine' ) ) {
+	} elsif( $routine_stmt_node->get_attribute( 'call_uroutine' ) ) {
 		return $engine->build_perl_stmt_urtn( $interface, $routine_node, $routine_stmt_node );
 	} else {}
 }
@@ -478,14 +478,14 @@ __EOL
 
 sub build_perl_stmt_srtn {
 	my ($engine, $interface, $routine_node, $routine_stmt_node) = @_;
-	my $sroutine = $routine_stmt_node->get_enumerated_attribute( 'call_sroutine' );
+	my $sroutine = $routine_stmt_node->get_attribute( 'call_sroutine' );
 	my %child_cxt_exprs = 
-		map { ($_->get_enumerated_attribute( 'call_sroutine_cxt' ) => $_) } 
-		grep { $_->get_enumerated_attribute( 'call_sroutine_cxt' ) }
+		map { ($_->get_attribute( 'call_sroutine_cxt' ) => $_) } 
+		grep { $_->get_attribute( 'call_sroutine_cxt' ) }
 		@{$routine_stmt_node->get_child_nodes()};
 	my %child_arg_exprs = 
-		map { ($_->get_enumerated_attribute( 'call_sroutine_arg' ) => $_) } 
-		grep { $_->get_enumerated_attribute( 'call_sroutine_arg' ) }
+		map { ($_->get_attribute( 'call_sroutine_arg' ) => $_) } 
+		grep { $_->get_attribute( 'call_sroutine_arg' ) }
 		@{$routine_stmt_node->get_child_nodes()};
 	if( $sroutine eq 'CATALOG_OPEN' ) {
 		my $conn_cx = $engine->build_perl_expr( $interface, $routine_node, $child_cxt_exprs{'CONN_CX'} );
@@ -524,19 +524,19 @@ sub build_perl_expr {
 	unless( $expr_node ) {
 		return 'undef';
 	}
-	my $cont_type = $expr_node->get_enumerated_attribute( 'cont_type' );
+	my $cont_type = $expr_node->get_attribute( 'cont_type' );
 	if( $cont_type eq 'LIST' ) {
 		return '('.join( ', ', map { $engine->build_perl_expr( $interface, $routine_node, $_ ) } 
 			@{$expr_node->get_child_nodes()} ).')';
 	} else {
-		if( my $valf_literal = $expr_node->get_literal_attribute( 'valf_literal' ) ) {
-			#my $domain_node = $expr_node->get_node_ref_attribute( 'scalar_data_type' );
+		if( my $valf_literal = $expr_node->get_attribute( 'valf_literal' ) ) {
+			#my $domain_node = $expr_node->get_attribute( 'scalar_data_type' );
 			return $engine->build_perl_literal_cstr( $valf_literal );
-		} elsif( my $routine_item_node = $expr_node->get_node_ref_attribute( 'valf_p_routine_item' ) ) {
+		} elsif( my $routine_item_node = $expr_node->get_attribute( 'valf_p_routine_item' ) ) {
 			return $engine->build_perl_identifier_rtn_var( $routine_item_node );
-		} elsif( $expr_node->get_enumerated_attribute( 'valf_call_sroutine' ) ) {
+		} elsif( $expr_node->get_attribute( 'valf_call_sroutine' ) ) {
 			return $engine->build_perl_expr_srtn( $interface, $routine_node, $expr_node );
-		} elsif( $expr_node->get_node_ref_attribute( 'valf_call_uroutine' ) ) {
+		} elsif( $expr_node->get_attribute( 'valf_call_uroutine' ) ) {
 			return $engine->build_perl_expr_urtn( $interface, $routine_node, $expr_node );
 		} else {}
 	}
@@ -546,14 +546,14 @@ sub build_perl_expr {
 
 sub build_perl_expr_srtn {
 	my ($engine, $interface, $routine_node, $routine_expr_node) = @_;
-	my $sroutine = $routine_expr_node->get_enumerated_attribute( 'valf_call_sroutine' );
+	my $sroutine = $routine_expr_node->get_attribute( 'valf_call_sroutine' );
 	my %child_cxt_exprs = 
-		map { ($_->get_enumerated_attribute( 'call_sroutine_cxt' ) => $_) } 
-		grep { $_->get_enumerated_attribute( 'call_sroutine_cxt' ) }
+		map { ($_->get_attribute( 'call_sroutine_cxt' ) => $_) } 
+		grep { $_->get_attribute( 'call_sroutine_cxt' ) }
 		@{$routine_expr_node->get_child_nodes()};
 	my %child_arg_exprs = 
-		map { ($_->get_enumerated_attribute( 'call_sroutine_arg' ) => $_) } 
-		grep { $_->get_enumerated_attribute( 'call_sroutine_arg' ) }
+		map { ($_->get_attribute( 'call_sroutine_arg' ) => $_) } 
+		grep { $_->get_attribute( 'call_sroutine_arg' ) }
 		@{$routine_expr_node->get_child_nodes()};
 	if( $sroutine eq 'CATALOG_LIST' ) {
 		my $recursive = $engine->build_perl_expr( $interface, $routine_node, $child_arg_exprs{'RECURSIVE'} );
@@ -646,7 +646,7 @@ sub encode_perl_identifier {
 
 sub build_perl_identifier_element {
 	my ($engine, $object_node, $debug) = @_;
-	return $engine->encode_perl_identifier( $object_node->get_literal_attribute( 'si_name' ), $debug );
+	return $engine->encode_perl_identifier( $object_node->get_attribute( 'si_name' ), $debug );
 }
 
 sub build_perl_identifier_rtn {
@@ -689,7 +689,7 @@ sub encode_perl_literal_cstr {
 sub build_perl_literal_cstr_from_atvl {
 	my ($engine, $object_node, $attr_name) = @_;
 	$attr_name ||= 'si_name';
-	return $engine->encode_perl_literal_cstr( $object_node->get_literal_attribute( $attr_name ) );
+	return $engine->encode_perl_literal_cstr( $object_node->get_attribute( $attr_name ) );
 }
 
 ######################################################################
@@ -815,35 +815,35 @@ sub build_perl_declare_cx_conn {
 	my $prep_eng = $engine->{$PROP_IN_PROGRESS_PREP_ENG};
 
 	my $app_intf = $interface->get_root_interface();
-	my $cat_link_bp_node = $routine_var_node->get_node_ref_attribute( 'conn_link' );
+	my $cat_link_bp_node = $routine_var_node->get_attribute( 'conn_link' );
 
 	# Now figure out link target by cross-referencing app inst with cat link bp.
 	my $app_inst_node = $app_intf->get_app_inst_node();
 	my $cat_link_inst_node = undef;
 	foreach my $link (@{$app_inst_node->get_child_nodes( 'catalog_link_instance' )}) {
-		if( $link->get_node_ref_attribute( 'blueprint' ) eq $cat_link_bp_node ) {
+		if( $link->get_attribute( 'blueprint' )->get_self_id() eq $cat_link_bp_node->get_self_id() ) {
 			$cat_link_inst_node = $link;
 			last;
 		}
 	}
-	my $cat_inst_node = $cat_link_inst_node->get_node_ref_attribute( 'target' );
-	my $dsp_node = $cat_inst_node->get_node_ref_attribute( 'product' );
+	my $cat_inst_node = $cat_link_inst_node->get_attribute( 'target' );
+	my $dsp_node = $cat_inst_node->get_attribute( 'product' );
 
 	my %conn_prep_eco = (
-		'product_code' => $dsp_node->get_literal_attribute( 'product_code' ),
-		'is_memory_based' => $dsp_node->get_literal_attribute( 'is_memory_based' ),
-		'is_file_based' => $dsp_node->get_literal_attribute( 'is_file_based' ),
-		'is_local_proc' => $dsp_node->get_literal_attribute( 'is_local_proc' ),
-		'is_network_svc' => $dsp_node->get_literal_attribute( 'is_network_svc' ),
-		'file_path' => $cat_inst_node->get_literal_attribute( 'file_path' ),
-		'local_dsn' => $cat_link_inst_node->get_literal_attribute( 'local_dsn' ),
-		'login_name' => $cat_link_inst_node->get_literal_attribute( 'login_name' ),
-		'login_pass' => $cat_link_inst_node->get_literal_attribute( 'login_pass' ),
+		'product_code' => $dsp_node->get_attribute( 'product_code' ),
+		'is_memory_based' => $dsp_node->get_attribute( 'is_memory_based' ),
+		'is_file_based' => $dsp_node->get_attribute( 'is_file_based' ),
+		'is_local_proc' => $dsp_node->get_attribute( 'is_local_proc' ),
+		'is_network_svc' => $dsp_node->get_attribute( 'is_network_svc' ),
+		'file_path' => $cat_inst_node->get_attribute( 'file_path' ),
+		'local_dsn' => $cat_link_inst_node->get_attribute( 'local_dsn' ),
+		'login_name' => $cat_link_inst_node->get_attribute( 'login_name' ),
+		'login_pass' => $cat_link_inst_node->get_attribute( 'login_pass' ),
 	);
 	foreach my $opt_node (@{$cat_inst_node->get_child_nodes( 'catalog_instance_opt' )}, 
 			@{$cat_link_inst_node->get_child_nodes( 'catalog_link_instance_opt' )}) {
-		my $key = $opt_node->get_literal_attribute( 'si_key' );
-		my $value = $opt_node->get_literal_attribute( 'value' );
+		my $key = $opt_node->get_attribute( 'si_key' );
+		my $value = $opt_node->get_attribute( 'value' );
 		defined( $value ) or next;
 		if( !defined( $conn_prep_eco{$key} ) ) {
 			$conn_prep_eco{$key} = $value;
@@ -885,7 +885,7 @@ sub srtn_catalog_list {
 	# Note: the treatment for MySQL is confirmed as the official conception by their developers.
 
 	my $app_inst_node = $prep_intf->get_root_interface()->get_app_inst_node();
-	my $app_bp_node = $app_inst_node->get_node_ref_attribute( 'blueprint' );
+	my $app_bp_node = $app_inst_node->get_attribute( 'blueprint' );
 	my $container = $app_inst_node->get_container();
 
 	my @cat_link_bp_nodes = ();
@@ -900,18 +900,18 @@ sub srtn_catalog_list {
 		$dbi_driver eq 'File' and next; # Skip useless DBI-bundled driver.
 		# If we get here, then the $dbi_driver is something "normal".
 		my $dsp_node = $env_eng->make_srt_node( 'data_storage_product', $container );
-		$dsp_node->set_literal_attribute( 'si_name', $dbi_driver );
-		$dsp_node->set_literal_attribute( 'product_code', $dbi_driver );
+		$dsp_node->set_attribute( 'si_name', $dbi_driver );
+		$dsp_node->set_attribute( 'product_code', $dbi_driver );
 		if( $dbi_driver eq 'Sponge' ) {
-			$dsp_node->set_literal_attribute( 'is_memory_based', 1 ); # common setting for DBDs
+			$dsp_node->set_attribute( 'is_memory_based', 1 ); # common setting for DBDs
 		} elsif( $dbi_driver eq 'DBM' or $dbi_driver eq 'SQLite2' or $dbi_driver eq 'SQLite' ) {
-			$dsp_node->set_literal_attribute( 'is_file_based', 1 ); # common setting for DBDs
+			$dsp_node->set_attribute( 'is_file_based', 1 ); # common setting for DBDs
 		} elsif( $dbi_driver eq 'mysql' ) {
-			$dsp_node->set_literal_attribute( 'is_local_proc', 1 ); # common setting for DBDs
+			$dsp_node->set_attribute( 'is_local_proc', 1 ); # common setting for DBDs
 		} elsif( 0 ) {
-			$dsp_node->set_literal_attribute( 'is_network_svc', 1 ); # common setting for DBDs
+			$dsp_node->set_attribute( 'is_network_svc', 1 ); # common setting for DBDs
 		} else {
-			$dsp_node->set_literal_attribute( 'is_local_proc', 1 ); # may not be correct
+			$dsp_node->set_attribute( 'is_local_proc', 1 ); # may not be correct
 		}
 		foreach my $dbi_data_source (DBI->data_sources( $dbi_driver )) {
 			#Examples of $dbi_data_source formats are: 
@@ -920,31 +920,31 @@ sub srtn_catalog_list {
 			#dbi:DriverName:database=database_name;host=hostname;port=port 
 			my (undef, undef, $local_dsn) = split( ':', $dbi_data_source );
 			my $cat_bp_node = $env_eng->make_srt_node( 'catalog', $container );
-			$cat_bp_node->set_literal_attribute( 'si_name', $dbi_data_source );
+			$cat_bp_node->set_attribute( 'si_name', $dbi_data_source );
 			my $cat_link_bp_node = $env_eng->make_child_srt_node( 
 				'catalog_link', $app_bp_node );
-			$cat_link_bp_node->set_literal_attribute( 'si_name', $dbi_data_source );
-			$cat_link_bp_node->set_node_ref_attribute( 'target', $cat_bp_node );
+			$cat_link_bp_node->set_attribute( 'si_name', $dbi_data_source );
+			$cat_link_bp_node->set_attribute( 'target', $cat_bp_node );
 			my $cat_inst_node = $env_eng->make_srt_node( 'catalog_instance', $container );
-			$cat_inst_node->set_node_ref_attribute( 'product', $dsp_node );
-			$cat_inst_node->set_node_ref_attribute( 'blueprint', $cat_bp_node );
-			$cat_inst_node->set_literal_attribute( 'si_name', $dbi_data_source );
+			$cat_inst_node->set_attribute( 'product', $dsp_node );
+			$cat_inst_node->set_attribute( 'blueprint', $cat_bp_node );
+			$cat_inst_node->set_attribute( 'si_name', $dbi_data_source );
 			if( $dbi_driver eq 'DBM' or $dbi_driver eq 'SQLite2' or $dbi_driver eq 'SQLite' ) {
 				# is_file_based always uses file_path.
 				my $file_path = $local_dsn;
 				if( $dbi_driver eq 'DBM' ) {
 					$file_path =~ s|f_dir=(.*)|$1|;
 				}
-				$cat_inst_node->set_literal_attribute( 'file_path', $file_path );
+				$cat_inst_node->set_attribute( 'file_path', $file_path );
 			}
 			my $cat_link_inst_node = $env_eng->make_child_srt_node( 
 				'catalog_link_instance', $app_inst_node );
-			$cat_link_inst_node->set_node_ref_attribute( 'product', $dlp_node );
-			$cat_link_inst_node->set_node_ref_attribute( 'blueprint', $cat_link_bp_node );
-			$cat_link_inst_node->set_node_ref_attribute( 'target', $cat_inst_node );
+			$cat_link_inst_node->set_attribute( 'product', $dlp_node );
+			$cat_link_inst_node->set_attribute( 'blueprint', $cat_link_bp_node );
+			$cat_link_inst_node->set_attribute( 'target', $cat_inst_node );
 			unless( $dbi_driver eq 'DBM' or $dbi_driver eq 'SQLite2' or $dbi_driver eq 'SQLite' ) {
 				# non file-based currently uses local_dsn.
-				$cat_link_inst_node->set_literal_attribute( 'local_dsn', $local_dsn );
+				$cat_link_inst_node->set_attribute( 'local_dsn', $local_dsn );
 			}
 			push( @cat_link_bp_nodes, $cat_link_bp_node );
 		}
