@@ -19,17 +19,19 @@ tests will only be as thorough as the SQLite v3 feature set supports.
 __endquote
 
 WriteMakefile(
-	'NAME' => 'Rosetta::Engine::Generic',
-	'VERSION_FROM' => 'lib/Rosetta/Engine/Generic.pm', # finds $VERSION
-	'PREREQ_PM' => {
-		'Test::More' => '0.47', # but only for the test suite
-		'Rosetta' => '0.47',
-		'Rosetta::Validator' => '0.47', # but only for the test suite
-		'SQL::Routine::SQLBuilder' => '0.20',
-		'SQL::Routine::SQLParser' => '0.01',
-		'DBI' => '1.48',
-		'DBD::SQLite' => '1.09', # default database engine used by the test suite
-	},
+    'NAME' => 'Rosetta::Engine::Generic',
+    'VERSION_FROM' => 'lib/Rosetta/Engine/Generic.pm', # finds $VERSION
+    'PREREQ_PM' => {
+        'version' => 0,
+        'only' => 0,
+        'Test::More' => 0, # but only for the test suite
+        'Rosetta' => '0.48.0',
+        'Rosetta::Validator' => '0.48.0', # but only for the test suite
+        'SQL::Routine::SQLBuilder' => '0.21.0',
+        'SQL::Routine::SQLParser' => '0.2.0',
+        'DBI' => '1.48',
+        'DBD::SQLite' => '1.09', # default database engine used by the test suite
+    },
 );
 
 1;

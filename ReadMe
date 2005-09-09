@@ -9,8 +9,8 @@ CONTENTS
 * Keeping Up To Date
 * Dependencies
 * Support
-* Credits
-* Copyright And License
+* License And Copyright
+* Acknowledgements
 
 PREFACE
 
@@ -60,21 +60,23 @@ server, at "http://www.DarrenDuncan.net/d/perl/archives/".
 
 DEPENDENCIES
 
-Perl Version: 5.008001
+This distribution requires any version of Perl 5.x.y that is at least 5.8.1.
 
-Core Modules:
+It also requires the Perl modules 'version' and 'only', which would
+conceptually be built-in to Perl, but aren't, so they are on CPAN instead.
 
-	Test::More 0.47 (but only for the test suite)
+It also requires these modules that are on CPAN:
 
-Non-Core Modules: 
+    Rosetta 0.48.0
+    Rosetta::Validator 0.48.0 (but only for the test suite)
+    SQL::Routine::SQLBuilder 0.21.0
+    SQL::Routine::SQLParser 0.2.0
+    DBI 1.48
+    DBD::SQLite 1.09 (default database engine used by the test suite)
+    various DBI Driver (DBD) modules
 
-	Rosetta 0.47
-	Rosetta::Validator 0.47 (but only for the test suite)
-	SQL::Routine::SQLBuilder 0.20
-	SQL::Routine::SQLParser 0.01
-	DBI 1.48
-	DBD::SQLite 1.09 (default database engine used by the test suite)
-	various DBI Driver (DBD) modules
+This distribution also requires Test::More for its test suite, and that module
+is bundled with Perl.
 
 SUPPORT
 
@@ -83,11 +85,7 @@ or otherwise.  Feel free to ask me if you can't figure things out on your own, o
 another person whom you know has used this.  I may start a mailing list for 
 support issues later, so that users of my modules can help each other with them.
 
-CREDITS
-
-None besides myself so far.
-
-COPYRIGHT AND LICENSE
+LICENCE AND COPYRIGHT
 
 This file is part of the Rosetta::Engine::Generic feature reference
 implementation of the Rosetta database portability library.
@@ -131,6 +129,10 @@ Rosetta::Engine::Generic would appreciate being informed any time you create a
 modified version of Rosetta::Engine::Generic that you are willing to distribute,
 because that is a practical way of suggesting improvements to the standard
 version.
+
+ACKNOWLEDGEMENTS
+
+None besides myself so far.
 
 FIN
 
