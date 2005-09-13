@@ -14,10 +14,10 @@ plan( 'tests' => $_total_possible );
 # First ensure the modules to test will compile, are correct versions:
 
 use_ok( 'Rosetta::Engine::Generic' );
-is( $Rosetta::Engine::Generic::VERSION, qv('0.21.0'), "Rosetta::Engine::Generic is the correct version" );
+is( $Rosetta::Engine::Generic::VERSION, qv('0.21.1'), "Rosetta::Engine::Generic is the correct version" );
 
 use_ok( 'Rosetta::Engine::Generic::L::en' );
-is( $Rosetta::Engine::Generic::L::en::VERSION, qv('0.13.0'), "Rosetta::Engine::Generic::L::en is the correct version" );
+is( $Rosetta::Engine::Generic::L::en::VERSION, qv('0.13.1'), "Rosetta::Engine::Generic::L::en is the correct version" );
 
 ######################################################################
 # Here are some utility methods:

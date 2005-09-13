@@ -2,7 +2,7 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic;
-use version; our $VERSION = qv('0.21.0');
+use version; our $VERSION = qv('0.21.1');
 
 use only 'Rosetta' => '0.48.0-';
 use only 'SQL::Routine::SQLBuilder' => '0.21.0-'; # TODO: require at runtime instead
@@ -990,7 +990,7 @@ Rosetta::Engine::Generic - A catch-all Engine for any DBI-supported SQL database
 
 =head1 VERSION
 
-This document describes Rosetta::Engine::Generic version 0.21.0.
+This document describes Rosetta::Engine::Generic version 0.21.1.
 
 =head1 SYNOPSIS
 
@@ -1000,39 +1000,40 @@ I<The previous SYNOPSIS was removed; a new one will be written later.>
 
 This module is a reference implementation of fundamental Rosetta features.
 
-The Rosetta::Engine::Generic Perl 5 module is a functional but quickly built
-Rosetta Engine that interfaces with a wide variety of SQL databases.  Mainly
-this is all databases that have a DBI driver module for them and that support
-SQL natively; multi-database DBD modules like DBD::ODBC are supported on equal
-terms as single-database ones like DBD::Oracle.  I created this module to be a
-"first line of support" so that Rosetta works with a variety of databases as
-soon as possible.  
+The Rosetta::Engine::Generic Perl 5 module is a functional but quickly
+built Rosetta Engine that interfaces with a wide variety of SQL databases. 
+Mainly this is all databases that have a DBI driver module for them and
+that support SQL natively; multi-database DBD modules like DBD::ODBC are
+supported on equal terms as single-database ones like DBD::Oracle.  I
+created this module to be a "first line of support" so that Rosetta works
+with a variety of databases as soon as possible.
 
-While a better long term solution would probably be to make
-a separate Engine for each database, I will leave this up to other people that
-have the expertise and desire to make "better" support for each database;
-likewise, I leave it up to others to make Engines that don't use a DBI module,
-such as one built on Win32::ODBC, or Engines that talk to non-SQL databases
-like dBase (?), FoxPro (?) or FileMaker.
+While a better long term solution would probably be to make a separate
+Engine for each database, I will leave this up to other people that have
+the expertise and desire to make "better" support for each database;
+likewise, I leave it up to others to make Engines that don't use a DBI
+module, such as one built on Win32::ODBC, or Engines that talk to non-SQL
+databases like dBase (?), FoxPro (?) or FileMaker.
 
 Rosetta::Engine::Generic has an external dependency in several
 SQL::Routine::* modules, which do most of the actual work in SQL generating
 (usual task) or parsing; the latter is for some types of schema reverse
 engineering.  However, reverse engineering from "information schemas" will
-likely be done in Generic itself or a third module, as those are not SQL based.
+likely be done in Generic itself or a third module, as those are not SQL
+based.
 
 As with all Rosetta::Engine::* modules, you are not supposed to instantiate
 objects of Rosetta::Engine::Generic directly; rather, you use this module
-indirectly through the Rosetta::Interface class.  Following this logic, there 
-is no class function or method documentation here.
+indirectly through the Rosetta::Interface class.  Following this logic,
+there is no class function or method documentation here.
 
-I<CAVEAT: THIS ENGINE IS "UNDER CONSTRUCTION" AND MANY FEATURES DESCRIBED BY 
-SQL::Routine::Language AND Rosetta::Features ARE NOT YET IMPLEMENTED.>
+I<CAVEAT: THIS ENGINE IS "UNDER CONSTRUCTION" AND MANY FEATURES DESCRIBED
+BY SQL::Routine::Language AND Rosetta::Features ARE NOT YET IMPLEMENTED.>
 
 =head1 ROSETTA FEATURES SUPPORTED BY ENVIRONMENT
 
 Rosetta::Engine::Generic explicitly declares the support levels for certain
-Rosetta Native Interface features at the Environment level, listed below. 
+Rosetta Native Interface features at the Environment level, listed below.
 Those with 'yes' are always available regardless of any Connection
 circumstances; those with 'no' are never available.
 
@@ -1131,8 +1132,8 @@ circumstances; those with 'no' are never available.
     QUERY_SUBQUERY
         no
 
-This Engine may contain code that supports additional features, but these have
-not been tested at all and so are not yet declared.
+This Engine may contain code that supports additional features, but these
+have not been tested at all and so are not yet declared.
 
 =head1 ROSETTA FEATURES SUPPORTED PER CONNECTION
 
@@ -1152,84 +1153,90 @@ conditions for each feature are listed with them, below and indented.
 =head1 ENGINE CONFIGURATION OPTIONS
 
 The SQL::Routine objects that comprise Rosetta's inputs have special
-compartments for passing configuration options that are only recognizable to
-the chosen "data link product", which in Rosetta terms is an Engine.  At the
-moment, all Engine Configuration Options are conceptually passed in at "catalog
-link realization time", which is usually when or before a Connection Interface
-is about to be made (by a prepare(CATALOG_OPEN)/execute() combination), or it
-can be when or before an analogous operation (such as a CATALOG_INFO).  When a
-catalog link is realized, a short chain of related SRT Nodes is consulted for
-their attributes or associated child *_opt Nodes, one each of:
+compartments for passing configuration options that are only recognizable
+to the chosen "data link product", which in Rosetta terms is an Engine.  At
+the moment, all Engine Configuration Options are conceptually passed in at
+"catalog link realization time", which is usually when or before a
+Connection Interface is about to be made (by a
+prepare(CATALOG_OPEN)/execute() combination), or it can be when or before
+an analogous operation (such as a CATALOG_INFO).  When a catalog link is
+realized, a short chain of related SRT Nodes is consulted for their
+attributes or associated child *_opt Nodes, one each of:
 catalog_link_instance, catalog_instance, data_link_product,
 data_storage_product.  Option values declared later in this list are
 increasingly global, and those declared earlier are increasingly local; any
-time there are name collisions, the most global values have precedence.  The
-SRT Nodes are read at prepare() time.  At execute() time, any ROUTINE_ARGS
-values can fill in blanks, but they can not override any any SRT Node option
-values.  Once a Connection is created, the configuration settings for it can
-not be changed.
+time there are name collisions, the most global values have precedence. 
+The SRT Nodes are read at prepare() time.  At execute() time, any
+ROUTINE_ARGS values can fill in blanks, but they can not override any any
+SRT Node option values.  Once a Connection is created, the configuration
+settings for it can not be changed.
 
 These options are explicitly defined by SQL::Routine and have their own
 dedicated Node attributes; the options listed here have the same names
-(lower-case) as the attribute names in question.  You can provide each of these
-options either in the dedicated attribute or in a *_opt Node having a
+(lower-case) as the attribute names in question.  You can provide each of
+these options either in the dedicated attribute or in a *_opt Node having a
 same-named si_key; if both are set, the attribute takes precedence:
 
 =over 4
 
 =item
 
-B<product_code> - cstr - Corresponds to "data_storage_product.product_code".
+B<product_code> - cstr - Corresponds to
+"data_storage_product.product_code".
 
 =item
 
-B<is_memory_based> - cstr - Corresponds to "data_storage_product.is_memory_based".
+B<is_memory_based> - cstr - Corresponds to
+"data_storage_product.is_memory_based".
 
 =item
 
-B<is_file_based> - cstr - Corresponds to "data_storage_product.is_file_based".
+B<is_file_based> - cstr - Corresponds to
+"data_storage_product.is_file_based".
 
 =item
 
-B<is_local_proc> - cstr - Corresponds to "data_storage_product.is_local_proc".
+B<is_local_proc> - cstr - Corresponds to
+"data_storage_product.is_local_proc".
 
 =item
 
-B<is_network_svc> - cstr - Corresponds to "data_storage_product.is_network_svc".
+B<is_network_svc> - cstr - Corresponds to
+"data_storage_product.is_network_svc".
 
 =item
 
-B<file_path> - cstr - Corresponds to "catalog_instance.file_path".  When using
-a data storage product that is file based, this config option is required; it
-contains the file path for the data storage file.  TODO: server_ip,
-server_domain, server_port.
+B<file_path> - cstr - Corresponds to "catalog_instance.file_path".  When
+using a data storage product that is file based, this config option is
+required; it contains the file path for the data storage file.  TODO:
+server_ip, server_domain, server_port.
 
 =item
 
-B<local_dsn> - cstr - Corresponds to "catalog_link_instance.local_dsn".  This
-is the locally recognized "data source name" of the database/catalog that you
-want to connect to.
+B<local_dsn> - cstr - Corresponds to "catalog_link_instance.local_dsn". 
+This is the locally recognized "data source name" of the database/catalog
+that you want to connect to.
 
 =item
 
-B<login_name> - cstr - Corresponds to "catalog_link_instance.login_name".  This
-is a database natively recognized "authorization identifier" or "user name"
-that your application wants to log-in to the database as every time it
-connects.  You typically only set this if the user-name is hidden from the
-application user such as if it is stored in a application configuration file,
-and the user would not be prompted for a different one if it fails to work.  If
-the database user name is provided by the user, then you typically pass it as a
-host parameter value at execute() time instead of storing it in the model.  If
-you do not provide this value either in the model or at execute() time, we will
-assume the database doesn't require authentication, or we will try to log in
-anonymously.
+B<login_name> - cstr - Corresponds to "catalog_link_instance.login_name". 
+This is a database natively recognized "authorization identifier" or "user
+name" that your application wants to log-in to the database as every time
+it connects.  You typically only set this if the user-name is hidden from
+the application user such as if it is stored in a application configuration
+file, and the user would not be prompted for a different one if it fails to
+work.  If the database user name is provided by the user, then you
+typically pass it as a host parameter value at execute() time instead of
+storing it in the model.  If you do not provide this value either in the
+model or at execute() time, we will assume the database doesn't require
+authentication, or we will try to log in anonymously.
 
 =item
 
-B<login_pass> - cstr - Corresponds to "catalog_link_instance.login_pass".  This
-is the database natively recognized "password" that you provide along with the
-B<login_name>.  All parts of the above description for the "name" apply to the
-"pass" also.
+B<login_pass> - cstr - Corresponds to "catalog_link_instance.login_pass". 
+This is the database natively recognized "password" that you provide along
+with the B<login_name>.  All parts of the above description for the "name"
+apply to the "pass" also.
 
 =back
 
@@ -1239,51 +1246,54 @@ Rosetta::Engine::Generic recognizes these options:
 
 =item
 
-B<dbi_driver> - cstr - Seeing as Rosetta::Engine::Generic is meant to sit on
-top of DBI and any of its drivers, this option lets you explicitely pick which
-one to use.  If this is not set, then Generic will make an educated guess for
-which DBD module to use based on the B<product_code> engine configuration
-option, or it will fall back to DBD::ODBC if possible.
+B<dbi_driver> - cstr - Seeing as Rosetta::Engine::Generic is meant to sit
+on top of DBI and any of its drivers, this option lets you explicitely pick
+which one to use.  If this is not set, then Generic will make an educated
+guess for which DBD module to use based on the B<product_code> engine
+configuration option, or it will fall back to DBD::ODBC if possible.
 
 =item
 
 B<auto_commit> - bool - If this option is false (the default),
 Rosetta::Engine::Generic will always use transactions and require explicit
-commits for database actions to be saved; if this option is true, then it will
-instead auto-commit every database action, so separate commits are not
+commits for database actions to be saved; if this option is true, then it
+will instead auto-commit every database action, so separate commits are not
 necessary.  When this option is true, then this module should behave as
-expected with every kind of data storage product; automatic explicit commits
-will be issued for transaction supporting databases, and this behaviour will
-just happen anyway on non-supporting ones.  When this option is false, then you
-must make sure to only use database products with it that have native support
-for transactions; Generic won't even try to emulate transactions since that is
-too difficult to do properly; this module simply won't work properly with
-databases that lack native transaction support, even though it will incorrectly
-declare support for said activity.
+expected with every kind of data storage product; automatic explicit
+commits will be issued for transaction supporting databases, and this
+behaviour will just happen anyway on non-supporting ones.  When this option
+is false, then you must make sure to only use database products with it
+that have native support for transactions; Generic won't even try to
+emulate transactions since that is too difficult to do properly; this
+module simply won't work properly with databases that lack native
+transaction support, even though it will incorrectly declare support for
+said activity.
 
 =item
 
 B<ident_style> - enum - If this "identifier style" option is 'YD_CS' (the
-default), then Rosetta::Engine::Generic will generate SQL identifiers (such as
-table or column or schema names) that are delimited, case-sensitive, and able to
-contain any characters (including whitespace).  If this option is 'ND_CI_UP',
-then generated SQL identifiers will be non-delimited, case-insensitive, with
-latin characters folded to uppercase, and contain only a limited range of
-characters such as: letters, underscore, numbers (non-leading); these are
-"bare-word" identifiers.  The 'ND_CI_DN' style is the same as 'ND_CI_UP' except
-that the identifier is folded to lowercase.  Note that all of these formats are
-supported by the SQL standard but that the standard specifies all non-delimited
-identifiers will match as uppercase when compared to delimited identifiers.  SQL
-using the bare-word format may look cleaner than the delimited format, and some
-databases support it only, if not both.  As delimited identifiers carry more
-information (a full superset), that is what Rosetta and SQL::Routine support
-internally.  Movement from a delimited format to a bare-word one will fold the
-case of all alpha characters and strip the non-allowed characters, and both
-steps discard information; movement the other way will keep all information. 
-Rosetta::Engine::Generic will generate SQL in either format, as determined
-either by a database product's abilities, or according to this Engine
-configuration option.  Identifiers are usually delimited by double-quotes ('"',
-as distinct from string delimiting single-quotes), or back-ticks ('`').
+default), then Rosetta::Engine::Generic will generate SQL identifiers (such
+as table or column or schema names) that are delimited, case-sensitive, and
+able to contain any characters (including whitespace).  If this option is
+'ND_CI_UP', then generated SQL identifiers will be non-delimited,
+case-insensitive, with latin characters folded to uppercase, and contain
+only a limited range of characters such as: letters, underscore, numbers
+(non-leading); these are "bare-word" identifiers.  The 'ND_CI_DN' style is
+the same as 'ND_CI_UP' except that the identifier is folded to lowercase. 
+Note that all of these formats are supported by the SQL standard but that
+the standard specifies all non-delimited identifiers will match as
+uppercase when compared to delimited identifiers.  SQL using the bare-word
+format may look cleaner than the delimited format, and some databases
+support it only, if not both.  As delimited identifiers carry more
+information (a full superset), that is what Rosetta and SQL::Routine
+support internally.  Movement from a delimited format to a bare-word one
+will fold the case of all alpha characters and strip the non-allowed
+characters, and both steps discard information; movement the other way will
+keep all information. Rosetta::Engine::Generic will generate SQL in either
+format, as determined either by a database product's abilities, or
+according to this Engine configuration option.  Identifiers are usually
+delimited by double-quotes ('"', as distinct from string delimiting
+single-quotes), or back-ticks ('`').
 
 =back
 
@@ -1315,7 +1325,8 @@ L<SQL::Routine::SQLBuilder>, L<SQL::Routine::SQLParser>, L<DBI>.
 =head1 BUGS AND LIMITATIONS
 
 This module is currently in pre-alpha development status, meaning that some
-parts of it will be changed in the near future, perhaps in incompatible ways.
+parts of it will be changed in the near future, perhaps in incompatible
+ways.
 
 =head1 AUTHOR
 
@@ -1331,39 +1342,41 @@ rights reserved.  Address comments, suggestions, and bug reports to
 C<perl@DarrenDuncan.net>, or visit L<http://www.DarrenDuncan.net/> for more
 information.
 
-Rosetta::Engine::Generic is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License (GPL) as published by the
-Free Software Foundation (L<http://www.fsf.org/>); either version 2 of the License,
-or (at your option) any later version.  You should have received a copy of the
-GPL as part of the Rosetta::Engine::Generic distribution, in the file named
-"GPL"; if not, write to the Free Software Foundation, Inc., 51 Franklin St,
-Fifth Floor, Boston, MA  02110-1301, USA.
+Rosetta::Engine::Generic is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License (GPL) as
+published by the Free Software Foundation (L<http://www.fsf.org/>); either
+version 2 of the License, or (at your option) any later version.  You
+should have received a copy of the GPL as part of the
+Rosetta::Engine::Generic distribution, in the file named "GPL"; if not,
+write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+Boston, MA  02110-1301, USA.
 
-Linking Rosetta::Engine::Generic statically or dynamically with other modules is
-making a combined work based on Rosetta::Engine::Generic.  Thus, the terms and
-conditions of the GPL cover the whole combination.  As a special exception, the
-copyright holders of Rosetta::Engine::Generic give you permission to link
-Rosetta::Engine::Generic with independent modules, regardless of the license
-terms of these independent modules, and to copy and distribute the resulting
-combined work under terms of your choice, provided that every copy of the
-combined work is accompanied by a complete copy of the source code of
-Rosetta::Engine::Generic (the version of Rosetta::Engine::Generic used to
-produce the combined work), being distributed under the terms of the GPL plus
-this exception.  An independent module is a module which is not derived from or
-based on Rosetta::Engine::Generic, and which is fully useable when not linked to
+Linking Rosetta::Engine::Generic statically or dynamically with other
+modules is making a combined work based on Rosetta::Engine::Generic.  Thus,
+the terms and conditions of the GPL cover the whole combination.  As a
+special exception, the copyright holders of Rosetta::Engine::Generic give
+you permission to link Rosetta::Engine::Generic with independent modules,
+regardless of the license terms of these independent modules, and to copy
+and distribute the resulting combined work under terms of your choice,
+provided that every copy of the combined work is accompanied by a complete
+copy of the source code of Rosetta::Engine::Generic (the version of
+Rosetta::Engine::Generic used to produce the combined work), being
+distributed under the terms of the GPL plus this exception.  An independent
+module is a module which is not derived from or based on
+Rosetta::Engine::Generic, and which is fully useable when not linked to
 Rosetta::Engine::Generic in any form.
 
-Any versions of Rosetta::Engine::Generic that you modify and distribute must
-carry prominent notices stating that you changed the files and the date of any
-changes, in addition to preserving this original copyright notice and other
-credits.  Rosetta::Engine::Generic is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Any versions of Rosetta::Engine::Generic that you modify and distribute
+must carry prominent notices stating that you changed the files and the
+date of any changes, in addition to preserving this original copyright
+notice and other credits.  Rosetta::Engine::Generic is distributed in the
+hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 While it is by no means required, the copyright holders of
-Rosetta::Engine::Generic would appreciate being informed any time you create a
-modified version of Rosetta::Engine::Generic that you are willing to distribute,
-because that is a practical way of suggesting improvements to the standard
-version.
+Rosetta::Engine::Generic would appreciate being informed any time you
+create a modified version of Rosetta::Engine::Generic that you are willing
+to distribute, because that is a practical way of suggesting improvements
+to the standard version.
 
 =cut
