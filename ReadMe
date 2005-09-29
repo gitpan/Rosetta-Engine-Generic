@@ -29,7 +29,7 @@ your preferred database engine and/or working environment, you should edit
 this distribution's test configuration file "t_setup.pl" prior to running
 'make test' and/or 'perl Makefile.PL'.  The setup details that you input
 should match a visible database engine that you have full privileges on,
-including the ability to create schema objects, and select or modify data. 
+including the ability to create schema objects, and select or modify data.
 If you do not edit "t_setup.pl", such as when you are a fully-automatic
 CPAN tester, then the test suite will use the newest SQLite v3 database
 engine by default, and the executed tests will only be as thorough as the
@@ -68,15 +68,14 @@ This distribution requires any version of Perl 5.x.y that is at least
 It also requires the Perl modules 'version' and 'only', which would
 conceptually be built-in to Perl, but aren't, so they are on CPAN instead.
 
-It also requires these modules that are on CPAN:
+It also requires the Perl module List::Util, which would conceptually be
+built-in to Perl, but is bundled with it instead.
 
-    Rosetta 0.48.0
-    Rosetta::Validator 0.48.0 (but only for the test suite)
-    SQL::Routine::SQLBuilder 0.21.0
-    SQL::Routine::SQLParser 0.2.0
-    DBI 1.48
-    DBD::SQLite 1.09 (default database engine used by the test suite)
-    various DBI Driver (DBD) modules
+It also requires these modules that are on CPAN: Rosetta '0.48.0-',
+Rosetta::Validator '0.48.0-' (but only for the test suite),
+SQL::Routine::SQLBuilder '0.21.0-', SQL::Routine::SQLParser '0.2.0-', DBI
+'1.48-', DBD::SQLite '1.09-' (default database engine used by the test
+suite), various DBI Driver (DBD) modules.
 
 This distribution also requires Test::More for its test suite, and that
 module is bundled with Perl.

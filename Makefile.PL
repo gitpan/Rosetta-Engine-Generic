@@ -24,6 +24,7 @@ WriteMakefile(
     'PREREQ_PM' => {
         'version' => 0,
         'only' => 0,
+        'List::Util' => 0,
         'Test::More' => 0, # but only for the test suite
         'Rosetta' => '0.48.0',
         'Rosetta::Validator' => '0.48.0', # but only for the test suite

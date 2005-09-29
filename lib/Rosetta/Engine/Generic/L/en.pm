@@ -2,19 +2,19 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic::L::en;
-use version; our $VERSION = qv('0.13.1');
+use version; our $VERSION = qv('0.13.2');
 
 ######################################################################
 
 my $CG = 'Rosetta::Engine::Generic';
 
 my %text_strings = (
-    'ROS_G_NO_DBI_DRIVER_HINT_MATCH' => 
-        $CG.' - can\'t find any installed DBI driver with a name like "{NAME}"',
+    'ROS_G_NO_DBI_DRIVER_HINT_MATCH' =>
+        $CG . q[ - can't find any installed DBI driver with a name like "{NAME}"],
 
-    'ROS_G_RAW_SQLSTATE' => 
-        $CG.' - following the most recent externally invocated procedure, the returned '.
-        '"SQLSTATE" 5-character-string value was "{SQLSTATE_NUM}" (zero is success)',
+    'ROS_G_RAW_SQLSTATE' =>
+        $CG . q[ - following the most recent externally invocated procedure, the returned ]
+        . q["SQLSTATE" 5-character-string value was "{SQLSTATE_NUM}" (zero is success)],
 );
 
 ######################################################################
@@ -37,7 +37,7 @@ Rosetta::Engine::Generic::L::en - Localization of Rosetta::Engine::Generic for E
 
 =head1 VERSION
 
-This document describes Rosetta::Engine::Generic::L::en version 0.13.1.
+This document describes Rosetta::Engine::Generic::L::en version 0.13.2.
 
 =head1 SYNOPSIS
 
@@ -46,8 +46,8 @@ This document describes Rosetta::Engine::Generic::L::en version 0.13.1.
 
     # do work ...
 
-    my $translator = Locale::KeyedText->new_translator( 
-        ['Rosetta::Engine::Generic::L::', 'SQL::Routine::SQLBuilder::L::', 
+    my $translator = Locale::KeyedText->new_translator(
+        ['Rosetta::Engine::Generic::L::', 'SQL::Routine::SQLBuilder::L::',
         'SQL::Routine::SQLParser::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
 
     # do work ...
@@ -55,7 +55,7 @@ This document describes Rosetta::Engine::Generic::L::en version 0.13.1.
     eval {
         # do work with Rosetta, which may throw an exception ...
     };
-    if( my $error_message_object = $@ ) {
+    if (my $error_message_object = $@) {
         # examine object here if you want and programmatically recover...
 
         # or otherwise do the next few lines...

@@ -60,7 +60,7 @@ announce SQL::Routine/Rosetta Developer Release #8.
 the insert-cursor features.
 
 * Start the Rosetta::Emulator::DBI module and try to get it working on
-something simple, like connecting to a database and selecting records. 
+something simple, like connecting to a database and selecting records.
 Maybe table creation and IUD also.
 
 * Some time around now, any or all of the primary Rosetta framework modules
