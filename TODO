@@ -2,19 +2,12 @@ CURRENT DOCUMENTATION: TODO
 
 Preamble: The following will have external coordinated changes in
 Rosetta::Validator so that they can be tested and, where needed, Rosetta,
-SQL::Routine, and SQL::Routine::SQLBuilder also.  The SQL:2003 standard
+Rosetta::Model, and Rosetta::Utility::SQLBuilder also.  The SQL:2003 standard
 will continue to be used for primary guidance.  Free database products that
 run under Mac OS X 10.3 and have a well-maintained DBD module will get the
 early priority simply because I can easily download and install them on my
 computer.  Other databases will get supported when I can get access to
 them, or someone else does it for me.
-
-* Update the white space of this distribution to follow some best
-practices.  This includes having code lines not be longer than 75
-characters (like the POD lines).  This and other changes will be
-accomplished by running all the code files through perltidy (the first time
-I ever use that program, though I was a very consistent formatter before),
-which may alter a few other things towards best practices.
 
 * Convert all class objects to be of the inside-out variety rather than
 hash-based, so to gain rigorous protection against external code directly
@@ -26,8 +19,7 @@ accessing our object attributes, and to avoid related maintenance problems.
 performance of inserts and trivial selects against tables on a SQLite 3.2.x
 database.
 
-* Once the above are done, announce Rosetta/SQL::Routine Developer Release
-#4.
+* Once the above are done, announce Rosetta Developer Release #4.
 
 * Add support for the same activities, plus all pre-existing abilities,
 against SQLite 2.8.x and multiple MySQL versions (5.0.x, 4.1.x, 4.0.x,
@@ -36,25 +28,25 @@ database at once, and for properly auto-detecting SQLite databases.  Also
 set things up so that CATALOG_OPEN will *not* create a new SQLite database
 if it doesn't exist (behave like other dbs).
 
-* Start off the SQL::Routine::SQLParser module.  Add support to the module
+* Start off the Rosetta::Utility::SQLParser module.  Add support to the module
 set for reverse-engineering tables from all database types.  For this
 release, do reverse-engineering manually, since its simple.  Once that's
-done, announce SQL::Routine/Rosetta Developer Release #5.
+done, announce Rosetta Developer Release #5.
 
 * Make the previous stuff work with PostgreSQL 8.0, and possibly 7.4 also.
 
 * Add support for updates and deletes against tables.  Once that's done,
-announce SQL::Routine/Rosetta Developer Release #6.
+announce Rosetta Developer Release #6.
 
 * Make non-trivial selects work with all database types.  For some engines
 such as MySQL 3.23 and 4.0, this will require some emulation.  Once that's
-done, announce SQL::Routine/Rosetta Developer Release #7.
+done, announce Rosetta Developer Release #7.
 
 * Start testing generation and reverse-engineering of more complicated
 database schema objects like views and routines.  From now on, SQL
 tokenizing will probably be handled by a new dependency, such as
 Parse::RecDescent, as it is a lot more complicated.  Once that's done,
-announce SQL::Routine/Rosetta Developer Release #8.
+announce Rosetta Developer Release #8.
 
 * Start working on the schema-to-schema or db-to-db cloning features, and
 the insert-cursor features.
@@ -67,7 +59,7 @@ Maybe table creation and IUD also.
 may be updated to 'alpha' development status, up from 'pre-alpha'.  I may
 want to change the License around then too.
 
-* Announce the SQL::Routine/Rosetta Generally Available Release #1.
+* Announce the Rosetta Generally Available Release #1.
 
 * Get it to work with Oracle, OpenBase, other commonly used database
 products.

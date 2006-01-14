@@ -1,6 +1,55 @@
                        Rosetta-Engine-Generic
 ----------------------------------------------------------------------
 
+2006-01-13   Darren Duncan <perl@DarrenDuncan.net>
+
+    * Rosetta-Engine-Generic Release 0.22.0 (SVN r1184).
+
+    * This is a retroactive release, made on intended to help ease the
+    transition between the first and second major code bases of the Rosetta
+    database access framework.  (The first codebase was written mainly
+    between 2002-12 and 2005-09, while the second rewritten code base was
+    mainly between 2005-10 and later.)  While this release actually takes
+    place on January "Friday The Thirteenth" 2006 and is affected by recent
+    design decisions, it is for the most part as identical as possible to
+    the most recent (2005-09-28) other release of the first code base.
+    Think of this retroactive release as having been made on 2005-09-29, in
+    regards to its dependency versions, design decisions, documentation for
+    SVN repository location, TODO, etc.  Some of the details being
+    published now, like the SVN location, is already false (its actually at
+    http://svn.utsl.gen.nz/trunk/Rosetta-old/), but they are maintained as
+    they were for historical posterity.
+
+    * The changes with this release are all summed up by that there is no
+    longer a distinct "SQL::Routine" name space, and all packages that were
+    in that name space are now in the "Rosetta" name space.  There are no
+    actual functionality changes, just a shifting around of components;
+    your existing code that used the old packages will remain compatible
+    with just some renaming of your package references.
+
+    * New code file versions are: Generic.pm 0.22.0 and en.pm 0.14.0.
+
+    * Updated external dependency on Rosetta and Rosetta::Validator each to
+    0.71.0, and on Rosetta::Utility::SQLBuilder (was
+    SQL::Routine::SQLBuilder) to 0.22.0, and on Rosetta::Utility::SQLParser
+    (was SQL::Routine::SQLParser) to 0.3.0.
+
+    * Renamed all Locale::KeyedText Message and Template keys from
+    "SRT_[|SB_|SP_]*" to "ROS_[M_|U_SB_|U_SP_]*".  Er, you may have to
+    update your code to account for this also, to avoid breakage.
+
+    * Updated 2 lines in Generic.pm to rename the data dictionary items
+    "SRT_NODE[|_LIST]" to "ROS_M_NODE[|_LIST]".  Er, you may have to update
+    your code to account for this also, to avoid breakage.
+
+    * In Generic.pm, renamed the make[|_child]_srt_node() methods to
+    make[|_child]_model_node().
+
+    * In Generic.pm, renamed the call to the Rosetta Interface method
+    get_srt_container() with get_model_container().
+
+    * In Generic.pm, replaced 1 "', '" each with "q{, }".
+
 2005-09-28   Darren Duncan <perl@DarrenDuncan.net>
 
     * Rosetta-Engine-Generic Release 0.21.2 (SVN r878).

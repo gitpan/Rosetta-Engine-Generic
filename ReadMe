@@ -71,9 +71,9 @@ conceptually be built-in to Perl, but aren't, so they are on CPAN instead.
 It also requires the Perl module List::Util, which would conceptually be
 built-in to Perl, but is bundled with it instead.
 
-It also requires these modules that are on CPAN: Rosetta '0.48.0-',
-Rosetta::Validator '0.48.0-' (but only for the test suite),
-SQL::Routine::SQLBuilder '0.21.0-', SQL::Routine::SQLParser '0.2.0-', DBI
+It also requires these modules that are on CPAN: Rosetta '0.71.0-',
+Rosetta::Validator '0.71.0-' (but only for the test suite),
+Rosetta::Utility::SQLBuilder '0.22.0-', Rosetta::Utility::SQLParser '0.3.0-', DBI
 '1.48-', DBD::SQLite '1.09-' (default database engine used by the test
 suite), various DBI Driver (DBD) modules.
 

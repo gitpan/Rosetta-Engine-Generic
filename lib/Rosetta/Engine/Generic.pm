@@ -1,13 +1,13 @@
 #!perl
 use 5.008001; use utf8; use strict; use warnings;
 
-use only 'Rosetta' => '0.48.0-';
-use only 'SQL::Routine::SQLBuilder' => '0.21.0-'; # TODO: require at runtime instead
-use only 'SQL::Routine::SQLParser' => '0.2.0-'; # TODO: require at runtime instead
+use only 'Rosetta' => '0.71.0-';
+use only 'Rosetta::Utility::SQLBuilder' => '0.22.0-'; # TODO: require at runtime instead
+use only 'Rosetta::Utility::SQLParser' => '0.3.0-'; # TODO: require at runtime instead
 use only 'DBI' => '1.48-'; # TODO: require at runtime instead
 
 package Rosetta::Engine::Generic;
-use version; our $VERSION = qv('0.21.2');
+use version; our $VERSION = qv('0.22.0');
 use base qw( Rosetta::Engine );
 
 use List::Util qw( first );
@@ -28,23 +28,23 @@ my $PROP_IN_PROGRESS_PREP_ENG = 'in_progress_prep_eng';
     # isn't executing.
 my $PROP_PREP_RTN = 'prep_rtn';
     # ref to a Perl anonymous subroutine.  This Perl closure is generated,
-    # by prepare(), from the SRT Node tree that RTN_NODE refers to; the
+    # by prepare(), from the ROS M Node tree that RTN_NODE refers to; the
     # resulting Preparation's execute() will simply invoke the closure.
 my $PROP_ENV_PERL_RTNS = 'env_perl_rtns';
     # hash (str,code) - For Environment Intfs -
-    # This stores all of the SRT routines that were compiled into Perl
+    # This stores all of the ROS M routines that were compiled into Perl
     # code.  Hash keys are unique generated ids that incorporate the
     # name-space hierarchy of a routine.
     # Hash values are Perl CODE refs, the result of "$r = sub { ... };"
     # One purpose this property serves is to be a cache so that if the same
-    # SRT routine is invoked multiple times, each additional call doesn't
+    # ROS M routine is invoked multiple times, each additional call doesn't
     # have the compile overhead.
     # TODO: Make sure this works properly with closed and re-opened
     # connections, as old DBI $sth's created during the compile phase
     # probably wouldn't be valid anymore.
     # Another purpose this property serves is to make it easy for multiple
     # routines to invoke each other, including recursively.
-    # Each 'routine' SRT Node becomes a single element value in this
+    # Each 'routine' ROS M Node becomes a single element value in this
     # hash-list property.
 my $PROP_ENV_PERL_RTN_STRS = 'env_perl_rtn_strs';
     # hash (str,code) - For Environment Intfs -
@@ -56,9 +56,9 @@ my $PROP_CONN_PREP_ECO = 'conn_prep_eco';
     # hash (str,lit) - For Connection Prep Intfs -
     # These are the Engine Config Opts that apply to all Connection Intfs
     # made from this Conn Prep; they will override any Conn's
-    # execute(ROUTINE_ARGS) values.  They are copied here from the SRT
+    # execute(ROUTINE_ARGS) values.  They are copied here from the ROS M
     # Nodes partly for speed and partly to prevent tampering during an open
-    # Connection due to modifying the original SRT.
+    # Connection due to modifying the original ROS M.
     # Note: At this moment there is no $PROP_ENV*ECO, as that would seem to
     # be counter-productive; eg, conflicting Env|Conn.features() values.
 my $PROP_CONN_IS_OPEN = 'conn_is_open';
@@ -418,9 +418,9 @@ __EOL
         }
         elsif ($cont_type eq 'LIST') {
         }
-        elsif ($cont_type eq 'SRT_NODE') {
+        elsif ($cont_type eq 'ROS_M_NODE') {
         }
-        elsif ($cont_type eq 'SRT_NODE_LIST') {
+        elsif ($cont_type eq 'ROS_M_NODE_LIST') {
         }
         else {}
     }
@@ -511,7 +511,7 @@ sub build_perl_expr {
         if !$expr_node;
     my $cont_type = $expr_node->get_attribute( 'cont_type' );
     if ($cont_type eq 'LIST') {
-        return '(' . (join ', ', map { $engine->build_perl_expr( $interface, $routine_node, $_ ) }
+        return '(' . (join q{, }, map { $engine->build_perl_expr( $interface, $routine_node, $_ ) }
             @{$expr_node->get_child_nodes()}) . ')';
     }
     else {
@@ -788,13 +788,13 @@ sub install_dbi_driver {
 
 ######################################################################
 
-sub make_srt_node {
+sub make_model_node {
     my ($engine, $node_type, $container) = @_;
     my $node = $container->new_node( $container, $node_type, $container->get_next_free_node_id() );
     return $node;
 }
 
-sub make_child_srt_node {
+sub make_child_model_node {
     my ($engine, $node_type, $pp_node, $pp_attr) = @_;
     my $container = $pp_node->get_container();
     my $node = $pp_node->new_node( $container, $node_type, $container->get_next_free_node_id() );
@@ -857,7 +857,7 @@ sub build_perl_declare_cx_conn {
     return <<__EOL;
     my ($rtn_var_nm_p_eng, $rtn_var_nm_p_intf) = \$rtv_prep_eng->get_env_cx_e_and_i( \$rtv_prep_intf );
     $rtn_var_nm = \$rtv_prep_intf->new_connection_interface( \$rtv_prep_intf, $rtn_var_nm_p_intf,
-        \$rtv_prep_intf->get_srt_container()->find_node_by_id( $cat_link_bp_node_id ) );
+        \$rtv_prep_intf->get_model_container()->find_node_by_id( $cat_link_bp_node_id ) );
 __EOL
 }
 
@@ -892,7 +892,7 @@ sub srtn_catalog_list {
         $dbi_driver eq 'ExampleP' and next DBI_DRIVER; # Skip useless DBI-bundled driver.
         $dbi_driver eq 'File' and next DBI_DRIVER; # Skip useless DBI-bundled driver.
         # If we get here, then the $dbi_driver is something "normal".
-        my $dsp_node = $env_eng->make_srt_node( 'data_storage_product', $container );
+        my $dsp_node = $env_eng->make_model_node( 'data_storage_product', $container );
         $dsp_node->set_attribute( 'si_name', $dbi_driver );
         $dsp_node->set_attribute( 'product_code', $dbi_driver );
         if ($dbi_driver eq 'Sponge') {
@@ -916,13 +916,13 @@ sub srtn_catalog_list {
             #dbi:DriverName:database_name@hostname:port
             #dbi:DriverName:database=database_name;host=hostname;port=port
             my (undef, undef, $local_dsn) = split ':', $dbi_data_source;
-            my $cat_bp_node = $env_eng->make_srt_node( 'catalog', $container );
+            my $cat_bp_node = $env_eng->make_model_node( 'catalog', $container );
             $cat_bp_node->set_attribute( 'si_name', $dbi_data_source );
-            my $cat_link_bp_node = $env_eng->make_child_srt_node(
+            my $cat_link_bp_node = $env_eng->make_child_model_node(
                 'catalog_link', $app_bp_node );
             $cat_link_bp_node->set_attribute( 'si_name', $dbi_data_source );
             $cat_link_bp_node->set_attribute( 'target', $cat_bp_node );
-            my $cat_inst_node = $env_eng->make_srt_node( 'catalog_instance', $container );
+            my $cat_inst_node = $env_eng->make_model_node( 'catalog_instance', $container );
             $cat_inst_node->set_attribute( 'product', $dsp_node );
             $cat_inst_node->set_attribute( 'blueprint', $cat_bp_node );
             $cat_inst_node->set_attribute( 'si_name', $dbi_data_source );
@@ -934,7 +934,7 @@ sub srtn_catalog_list {
                 }
                 $cat_inst_node->set_attribute( 'file_path', $file_path );
             }
-            my $cat_link_inst_node = $env_eng->make_child_srt_node(
+            my $cat_link_inst_node = $env_eng->make_child_model_node(
                 'catalog_link_instance', $app_inst_node );
             $cat_link_inst_node->set_attribute( 'product', $dlp_node );
             $cat_link_inst_node->set_attribute( 'blueprint', $cat_link_bp_node );
@@ -983,7 +983,7 @@ sub srtn_catalog_open {
     my $dbi_dbh = $prep_eng->open_dbi_connection(
         $dbi_driver, $local_dsn, $login_name, $login_pass, $auto_commit );
 
-    my $builder = SQL::Routine::SQLBuilder->new();
+    my $builder = Rosetta::Utility::SQLBuilder->new();
     if (defined $conn_eco{'ident_style'}) {
         $builder->delimited_identifiers( $conn_eco{'ident_style'} );
     }
@@ -1056,7 +1056,7 @@ Rosetta::Engine::Generic - A catch-all Engine for any DBI-supported SQL database
 
 =head1 VERSION
 
-This document describes Rosetta::Engine::Generic version 0.21.2.
+This document describes Rosetta::Engine::Generic version 0.22.0.
 
 =head1 SYNOPSIS
 
@@ -1082,7 +1082,7 @@ module, such as one built on Win32::ODBC, or Engines that talk to non-SQL
 databases like dBase (?), FoxPro (?) or FileMaker.
 
 Rosetta::Engine::Generic has an external dependency in several
-SQL::Routine::* modules, which do most of the actual work in SQL generating
+Rosetta::Model::* modules, which do most of the actual work in SQL generating
 (usual task) or parsing; the latter is for some types of schema reverse
 engineering.  However, reverse engineering from "information schemas" will
 likely be done in Generic itself or a third module, as those are not SQL
@@ -1094,7 +1094,7 @@ indirectly through the Rosetta::Interface class.  Following this logic,
 there is no class function or method documentation here.
 
 I<CAVEAT: THIS ENGINE IS "UNDER CONSTRUCTION" AND MANY FEATURES DESCRIBED
-BY SQL::Routine::Language AND Rosetta::Features ARE NOT YET IMPLEMENTED.>
+BY Rosetta::Language AND Rosetta::Features ARE NOT YET IMPLEMENTED.>
 
 =head1 ROSETTA FEATURES SUPPORTED BY ENVIRONMENT
 
@@ -1218,7 +1218,7 @@ conditions for each feature are listed with them, below and indented.
 
 =head1 ENGINE CONFIGURATION OPTIONS
 
-The SQL::Routine objects that comprise Rosetta's inputs have special
+The Rosetta::Model objects that comprise Rosetta's inputs have special
 compartments for passing configuration options that are only recognizable
 to the chosen "data link product", which in Rosetta terms is an Engine.  At
 the moment, all Engine Configuration Options are conceptually passed in at
@@ -1226,18 +1226,18 @@ the moment, all Engine Configuration Options are conceptually passed in at
 Connection Interface is about to be made (by a
 prepare(CATALOG_OPEN)/execute() combination), or it can be when or before
 an analogous operation (such as a CATALOG_INFO).  When a catalog link is
-realized, a short chain of related SRT Nodes is consulted for their
+realized, a short chain of related ROS M Nodes is consulted for their
 attributes or associated child *_opt Nodes, one each of:
 catalog_link_instance, catalog_instance, data_link_product,
 data_storage_product.  Option values declared later in this list are
 increasingly global, and those declared earlier are increasingly local; any
 time there are name collisions, the most global values have precedence.
-The SRT Nodes are read at prepare() time.  At execute() time, any
+The ROS M Nodes are read at prepare() time.  At execute() time, any
 ROUTINE_ARGS values can fill in blanks, but they can not override any any
-SRT Node option values.  Once a Connection is created, the configuration
+ROS M Node option values.  Once a Connection is created, the configuration
 settings for it can not be changed.
 
-These options are explicitly defined by SQL::Routine and have their own
+These options are explicitly defined by Rosetta::Model and have their own
 dedicated Node attributes; the options listed here have the same names
 (lower-case) as the attribute names in question.  You can provide each of
 these options either in the dedicated attribute or in a *_opt Node having a
@@ -1351,7 +1351,7 @@ the standard specifies all non-delimited identifiers will match as
 uppercase when compared to delimited identifiers.  SQL using the bare-word
 format may look cleaner than the delimited format, and some databases
 support it only, if not both.  As delimited identifiers carry more
-information (a full superset), that is what Rosetta and SQL::Routine
+information (a full superset), that is what Rosetta and Rosetta::Model
 support internally.  Movement from a delimited format to a bare-word one
 will fold the case of all alpha characters and strip the non-allowed
 characters, and both steps discard information; movement the other way will
@@ -1375,8 +1375,8 @@ conceptually be built-in to Perl, but aren't, so they are on CPAN instead.
 It also requires the Perl module L<List::Util>, which would conceptually be
 built-in to Perl, but is bundled with it instead.
 
-It also requires these modules that are on CPAN: L<Rosetta> '0.48.0-',
-L<SQL::Routine::SQLBuilder> '0.21.0-', L<SQL::Routine::SQLParser> '0.2.0-',
+It also requires these modules that are on CPAN: L<Rosetta> '0.71.0-',
+L<Rosetta::Utility::SQLBuilder> '0.22.0-', L<Rosetta::Utility::SQLParser> '0.3.0-',
 L<DBI> '1.48-' (highest version recommended).
 
 =head1 INCOMPATIBILITIES
@@ -1385,8 +1385,8 @@ None reported.
 
 =head1 SEE ALSO
 
-L<perl(1)>, L<Rosetta>, L<SQL::Routine>, L<Locale::KeyedText>,
-L<SQL::Routine::SQLBuilder>, L<SQL::Routine::SQLParser>, L<DBI>.
+L<perl(1)>, L<Rosetta>, L<Rosetta::Model>, L<Locale::KeyedText>,
+L<Rosetta::Utility::SQLBuilder>, L<Rosetta::Utility::SQLParser>, L<DBI>.
 
 =head1 BUGS AND LIMITATIONS
 

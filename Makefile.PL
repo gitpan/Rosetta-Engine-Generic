@@ -26,10 +26,10 @@ WriteMakefile(
         'only' => 0,
         'List::Util' => 0,
         'Test::More' => 0, # but only for the test suite
-        'Rosetta' => '0.48.0',
-        'Rosetta::Validator' => '0.48.0', # but only for the test suite
-        'SQL::Routine::SQLBuilder' => '0.21.0',
-        'SQL::Routine::SQLParser' => '0.2.0',
+        'Rosetta' => '0.71.0',
+        'Rosetta::Validator' => '0.71.0', # but only for the test suite
+        'Rosetta::Utility::SQLBuilder' => '0.22.0',
+        'Rosetta::Utility::SQLParser' => '0.3.0',
         'DBI' => '1.48',
         'DBD::SQLite' => '1.09', # default database engine used by the test suite
     },

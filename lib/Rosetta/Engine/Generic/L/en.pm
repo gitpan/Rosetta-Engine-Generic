@@ -2,7 +2,7 @@
 use 5.008001; use utf8; use strict; use warnings;
 
 package Rosetta::Engine::Generic::L::en;
-use version; our $VERSION = qv('0.13.2');
+use version; our $VERSION = qv('0.14.0');
 
 ######################################################################
 
@@ -37,7 +37,7 @@ Rosetta::Engine::Generic::L::en - Localization of Rosetta::Engine::Generic for E
 
 =head1 VERSION
 
-This document describes Rosetta::Engine::Generic::L::en version 0.13.2.
+This document describes Rosetta::Engine::Generic::L::en version 0.14.0.
 
 =head1 SYNOPSIS
 
@@ -47,8 +47,8 @@ This document describes Rosetta::Engine::Generic::L::en version 0.13.2.
     # do work ...
 
     my $translator = Locale::KeyedText->new_translator(
-        ['Rosetta::Engine::Generic::L::', 'SQL::Routine::SQLBuilder::L::',
-        'SQL::Routine::SQLParser::L::', 'Rosetta::L::', 'SQL::Routine::L::'], ['en'] );
+        ['Rosetta::Engine::Generic::L::', 'Rosetta::Utility::SQLBuilder::L::',
+        'Rosetta::Utility::SQLParser::L::', 'Rosetta::L::', 'Rosetta::Model::L::'], ['en'] );
 
     # do work ...
 
